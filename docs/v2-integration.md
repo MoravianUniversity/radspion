@@ -13,6 +13,24 @@ checkout / CI to render the new pages.
 
 ---
 
+## What to open / edit on the backend
+
+One file needs edits for the pages to work; two test files need a small update.
+**No new dependencies, no new endpoints beyond the one route, no model/storage/
+schema changes.**
+
+| File | Action | Section |
+| --- | --- | --- |
+| `src/radspion/web/agent.py` | **Add** the `GET /agent/data` (`mission_data`) route, and add an `intel_missions` dict to the existing dashboard context | §1 |
+| `tests/test_personnel.py` | **Remove** one now-stale assertion (the removed CONFIDENTIAL stamp) | §2 |
+| `tests/test_agent_dashboard.py` | *(optional)* **Add** tests for the new `/agent/data` route | §2 |
+| `static/img/confidential_your_eyes_only.png` | *(optional)* delete — no longer referenced | §2 |
+
+Nothing else in `web/`, `radspion.py`, `database.py`, the SQL, or the config is
+touched. The route uses only facade methods that already exist.
+
+---
+
 ## 1. Required: `mission_data` route + dashboard `intel_missions` context
 
 `src/radspion/web/agent.py`. Without this, a clean checkout **500s on every
