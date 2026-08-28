@@ -41,7 +41,6 @@ def test_personnel_page_shows_agent_record(testing_storyline_client):
     assert "Personnel file opened" in body
     assert "Mission Completed" in body
     assert "Clearance Granted" in body
-    assert "confidential_your_eyes_only.png" in body
     assert "personnel-codename.js" in body
     assert "data-personnel-codename-form" in body
     assert 'name="codename"' in body

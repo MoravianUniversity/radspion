@@ -83,6 +83,8 @@ def test_dashboard_hides_welcome_memo_after_first_completion(testing_storyline_c
 
     assert "dashboard__welcome" not in body
     assert "Show completed missions" in body
+    assert 'data-intel-open="debrief:es-alpha"' in body
+    assert "COMPLETE es-alpha" in body
 
 
 def test_dashboard_footer_links_field_activity(testing_storyline_client):

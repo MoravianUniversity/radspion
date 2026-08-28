@@ -12,7 +12,7 @@ Welcome to Radspion, a secret organization where agents carry out covert mission
 
 ## Your Codename
 
-When you first signed in, you were assigned a provisional codename, which you can see in the upper-right corner of every page. Click on your codename to open your Agent Personnel File, where you can choose your own codename. Radspion Command reminds you that your codename is displayed publicly, and you should pick one that is appropriate and respectful.
+When you first signed in, you were assigned a provisional codename, which you can see in the upper-left of every page. Click on your codename to open your Agent Personnel File, where you can choose your own codename. Radspion Command reminds you that your codename is displayed publicly, and you should pick one that is appropriate and respectful.
 
 ## Field Activity
 
