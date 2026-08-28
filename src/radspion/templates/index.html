@@ -1,28 +1,71 @@
-{% extends "base.html" %}
+{# Landing page — the Figma v2 design (see _staticfiles/README.md).
 
-{% block body_class %}page--landing{% endblock %}
+   Standalone rather than extending base.html: base carries the V1 stylesheet
+   and fonts, and this design replaces both. Pages migrate to the v2 theme one
+   at a time; base.html follows once the last V1 page is gone. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Radspion — Moravian University field operations platform for authorized agents.">
+  <title>Radspion</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 
-{% block content %}
-  <div class="landing">
-    <img
-      class="landing__mark"
-      src="{{ url_for('static', filename='img/radspion_mark_white.svg') }}"
-      width="176"
-      height="176"
-      alt=""
-    >
-    <h1 class="landing__title">Radspion</h1>
-    <p class="landing__codename">Designation RS-01 · Restricted</p>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <p class="landing__briefing">
-      This channel is for <em>authorized field personnel</em> only.<br>
+  {# "slight-chance" (Adobe Fonts) is the display face for the whole page.
+     Linked rather than @import-ed so it downloads in parallel with the
+     stylesheet below instead of being discovered after it parses. #}
+  <link rel="stylesheet" href="https://use.typekit.net/ibk6axw.css">
+  {# Roboto is only for the Google sign-in button, per Google's branding rules. #}
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/radspion-v2.css') }}">
+</head>
+<body class="page-landing">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages" role="status">
+        {% for category, message in messages %}
+          <p class="flash-message flash-message--{{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {# ============================================================= hero #}
+  <header class="hero">
+    <div class="hero__lockup">
+      <img class="hero__mark" src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="209" height="209" alt="">
+      <h1 class="hero__wordmark">
+        <img src="{{ url_for('static', filename='img/radspion-wordmark.svg') }}" width="680" height="49" alt="Radspion">
+      </h1>
+      <img class="hero__tagline" src="{{ url_for('static', filename='img/radspion-tagline.svg') }}" width="370" height="28" alt="Stay observant">
+    </div>
+  </header>
+
+  <main class="body-panel">
+
+    {# ====================================================== heading #}
+    <div class="frame designation">
+      <p class="designation__text">Designation RS-01 &middot; Restricted</p>
+    </div>
+
+    <p class="briefing">
+      This channel is for authorized field personnel only.<br>
       Identity verification is required.
     </p>
 
-    <section class="access-panel" aria-label="Agent authentication">
-      <p class="access-panel__prompt access-panel__prompt--auth">Agent Authentication</p>
-      <a href="{{ url_for('auth.google_login') }}" class="btn-google btn-google--agent-login">
-        <svg class="btn-google__icon" viewBox="0 0 48 48" aria-hidden="true">
+    {# ========================================================= auth #}
+    <section class="auth" aria-labelledby="auth-heading">
+      <h2 class="auth__heading" id="auth-heading">Agent Authentication</h2>
+
+      <a class="btn-google" href="{{ url_for('auth.google_login') }}">
+        <svg class="btn-google__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -30,18 +73,17 @@
         </svg>
         Sign in with Google
       </a>
-      </section>
+    </section>
 
-      <p class="landing__activity-link text-muted">
-        <a href="{{ url_for('main.activity') }}">Field Activity</a> — agency-wide mission progress
-      </p>
-    </div>
-{% endblock %}
+    {# ======================================================= footer #}
+    {% include "_site_footer_v2.html" %}
 
-{% block extra_body %}
+  </main>
+
   {% include "_transmission_modal.html" %}
   <script>
     window.RADSPION_AUTH_GOOGLE_URL = {{ url_for('auth.google_login') | tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/transmission-modal.js') }}"></script>
-{% endblock %}
+</body>
+</html>

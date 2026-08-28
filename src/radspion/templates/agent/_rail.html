@@ -1,0 +1,40 @@
+{# Sidebar rail (Figma "SIDEBAR" 7:83): section nav with a gold active segment
+   that slides to the selected section. Shared by base_agent_v2 and standalone
+   signed-in pages (personnel). #}
+<nav class="rail" aria-label="Sections">
+  {% set endpoint = request.endpoint %}
+  <a
+    class="rail__link{% if endpoint == 'agent.dashboard' %} rail__link--active{% endif %}"
+    href="{{ url_for('agent.dashboard') }}"
+    aria-label="Mission Dashboard"
+    {% if endpoint == 'agent.dashboard' %}aria-current="page"{% endif %}
+  >
+    <svg class="rail__icon rail__icon--home" viewBox="0 26.4756 27.5244 23.7744" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M13.7622 26.4756L0 39.249L1.27441 40.626L2.51221 39.4761V50.25H11.8872V40.875H15.6372V50.25H25.0122V39.4761L26.25 40.626L27.5244 39.249L13.7622 26.4756ZM13.7622 29.0244L23.1372 37.7402V48.375H17.5122V39H10.0122V48.375H4.38721V37.7402L13.7622 29.0244Z"/>
+    </svg>
+  </a>
+  <a
+    class="rail__link{% if endpoint == 'agent.mission_data' %} rail__link--active{% endif %}"
+    href="{{ url_for('agent.mission_data') }}"
+    aria-label="Mission Data"
+    {% if endpoint == 'agent.mission_data' %}aria-current="page"{% endif %}
+  >
+    {# Archive / data store — placeholder icon, easily swapped. #}
+    <svg class="rail__icon rail__icon--data" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <ellipse cx="12" cy="5" rx="7.25" ry="2.75" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M4.75 5V19C4.75 20.52 8 21.75 12 21.75C16 21.75 19.25 20.52 19.25 19V5" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M4.75 12C4.75 13.52 8 14.75 12 14.75C16 14.75 19.25 13.52 19.25 12" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  </a>
+  <a
+    class="rail__link{% if endpoint == 'agent.personnel' %} rail__link--active{% endif %}"
+    href="{{ url_for('agent.personnel') }}"
+    aria-label="Personnel File"
+    {% if endpoint == 'agent.personnel' %}aria-current="page"{% endif %}
+  >
+    <svg class="rail__icon rail__icon--file" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M4.5 20.5C4.5 16.63 7.86 14 12 14C16.14 14 19.5 16.63 19.5 20.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </a>
+</nav>

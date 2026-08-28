@@ -1,0 +1,14 @@
+{# Site footer, v2 theme — shared by every v2 page. The signed-in shell wraps
+   it in a .footer-band and passes footer_variant='sub' for the dimmer voice;
+   the landing page includes it bare. #}
+<footer class="site-footer{% if footer_variant == 'sub' %} site-footer--sub{% endif %}">
+  <p><a href="{{ url_for('main.activity') }}">Field Activity</a> &mdash; agency-wide mission progress</p>
+
+  <p class="site-footer__legal">
+    <a href="{{ url_for('main.about') }}">What is Radspion?</a> &nbsp;&middot;&nbsp;
+    <a href="{{ url_for('main.activity') }}">Field Activity</a> &nbsp;&middot;&nbsp;
+    <a href="{{ url_for('main.privacy') }}">Privacy Policy</a><br>
+    Moravian University &middot; Educational Use
+  </p>
+  <!-- ORUTNRSOAN -->
+</footer>

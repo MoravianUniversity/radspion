@@ -1,0 +1,81 @@
+{# Signed-in header bar — Figma "HEADER BAR" (13:202), see _staticfiles/README.md.
+
+   The Date | Time readout is a real, live clock in the viewer's local
+   timezone (static/js/topbar-clock.js); Network / Uplink keep Figma's static
+   labels with a comms pulse on the dots. The agent block shows a
+   client-generated hex identifier under the codename (Figma's "071b9a91-41dc"
+   slot), and the codename links to the Personnel File. #}
+<header class="topbar">
+  <a class="topbar__logo" href="{{ url_for('agent.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="62" height="62" alt="Radspion dashboard">
+  </a>
+
+  <span class="topbar__sep topbar__sep--1"></span>
+
+  <div class="topbar__group topbar__group--agent">
+    <p class="topbar__label">Agent:</p>
+    {% set on_personnel = request.endpoint == 'agent.personnel' %}
+    <p class="topbar__agent-name">
+      {# site-header__agent-link is the name the acceptance tests key off. #}
+      <a
+        class="topbar__agent-link site-header__agent-link{% if on_personnel %} site-header__agent-link--current{% endif %}"
+        href="{{ url_for('agent.personnel') }}"
+        {% if on_personnel %}aria-current="page"{% endif %}
+      >{{ user.codename }}</a>
+    </p>
+    {# Decorative hex identifier, filled in by static/js/agent-id.js. #}
+    <p class="topbar__label" data-agent-id data-agent-seed="{{ user.codename }}"></p>
+  </div>
+
+  <span class="topbar__sep topbar__sep--2"></span>
+
+  <form class="topbar__group topbar__group--clear clearance-form" action="#" method="post">
+    <label class="topbar__label topbar__label--gold" for="clearance-code">Clearance code</label>
+    <div class="clearance">
+      <input
+        class="clearance__input"
+        id="clearance-code"
+        name="clearance_code"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Clearance code"
+      >
+      <button class="clearance__submit" type="submit">Request Access</button>
+    </div>
+  </form>
+
+  <span class="topbar__sep topbar__sep--3"></span>
+
+  <div class="topbar__group topbar__group--network">
+    <p class="topbar__label">Network</p>
+    <p class="statusbox"><span class="statusbox__dot"></span>Secure</p>
+  </div>
+
+  <div class="topbar__group topbar__group--uplink">
+    <p class="topbar__label">Uplink</p>
+    <p class="statusbox"><span class="statusbox__dot statusbox__dot--uplink"></span>Online</p>
+  </div>
+
+  <span class="topbar__sep topbar__sep--4"></span>
+
+  <div class="topbar__group topbar__group--time">
+    <p class="topbar__label">Date | Time</p>
+    <p class="topbar__value topbar__time">
+      <time data-topbar-clock></time>
+    </p>
+  </div>
+
+  <span class="topbar__sep topbar__sep--5"></span>
+
+  <div class="topbar__profile">
+    <form action="{{ url_for('auth.logout') }}" method="post">
+      <button type="submit" class="topbar__logout">
+        <span class="topbar__logout-label">Logout</span>
+        <svg class="topbar__logout-icon" viewBox="0 0 20.3185 20" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M2.30769 0C1.03966 0 0 1.03966 0 2.30769V17.6923C0 18.9603 1.03966 20 2.30769 20H17.6923C18.9603 20 20 18.9603 20 17.6923V13.8462L18.4615 15.3846V17.6923C18.4615 18.125 18.125 18.4615 17.6923 18.4615H2.30769C1.875 18.4615 1.53846 18.125 1.53846 17.6923V2.30769C1.53846 1.875 1.875 1.53846 2.30769 1.53846H17.6923C18.125 1.53846 18.4615 1.875 18.4615 2.30769V4.61538L20 6.15385V2.30769C20 1.03966 18.9603 0 17.6923 0H2.30769ZM14.97 4.65144L13.8762 5.73317L17.3738 9.23077H6.15385V10.7692H17.3738L13.8762 14.2608L14.97 15.3546L20.3185 10L14.97 4.65144Z"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</header>

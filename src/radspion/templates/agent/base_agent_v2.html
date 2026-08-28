@@ -1,0 +1,68 @@
+{# Signed-in agent shell — the Figma v2 design (see _staticfiles/README.md):
+   fixed 1728px canvas, header bar, sidebar rail, content column, footer band.
+
+   Standalone rather than extending base.html for the same reason as
+   index.html: base carries the V1 stylesheet and fonts, which this design
+   replaces. Body carries both `page-dashboard` (v2 canvas styling) and
+   `page--dashboard` (clearance-redeem.js keys reload behaviour off it). #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{% block meta_description %}Radspion — Moravian University field operations platform for authorized agents.{% endblock %}">
+  <title>{% block title %}Radspion{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  {# "slight-chance" (Adobe Fonts) is the display face for the whole page. #}
+  <link rel="stylesheet" href="https://use.typekit.net/ibk6axw.css">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/radspion-v2.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="page-v2 {% block canvas_class %}page-dashboard{% endblock %} {% block body_class %}page--dashboard{% endblock %}">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages" role="status">
+        {% for category, message in messages %}
+          <p class="flash-message flash-message--{{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="canvas">
+    {% include "agent/_topbar.html" %}
+
+    <div class="shell">
+      {% include "agent/_rail.html" %}
+
+      <div class="content">
+        {% block agent_content %}{% endblock %}
+      </div>
+    </div>
+
+    {# Figma's dashboard has no footer; the transparency / OAuth-policy links
+       have to stay reachable from a signed-in page, so the brief's footer band
+       carries over. #}
+    <div class="footer-band">
+      {% with footer_variant = 'sub' %}
+        {% include "_site_footer_v2.html" %}
+      {% endwith %}
+    </div>
+  </div>
+
+  {% include "agent/_mobile_nav.html" %}
+
+  {% include "_transmission_modal.html" %}
+  <script src="{{ url_for('static', filename='js/transmission-modal.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/transmission-outcome.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/clearance-redeem.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/clearance-form.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/agent-id.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar-clock.js') }}"></script>
+  {% block agent_extra_body %}{% endblock %}
+</body>
+</html>
