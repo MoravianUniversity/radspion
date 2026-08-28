@@ -1,14 +1,17 @@
-{% extends "base.html" %}
+{% extends "base_public_v2.html" %}
 
 {% block title %}Transmission Terminated — Radspion{% endblock %}
 {% block meta_description %}Radspion — the requested channel could not be located.{% endblock %}
-{% block body_class %}page--landing{% endblock %}
+{% block body_class %}page page--error{% endblock %}
+
+{# Sealed-channel page: no header, just the not-found block over the footer. #}
+{% block site_header %}{% endblock %}
 
 {% block content %}
   <div class="not-found">
     <img
       class="not-found__mark"
-      src="{{ url_for('static', filename='img/radspion_mark_white.svg') }}"
+      src="{{ url_for('static', filename='img/radspion-mark.svg') }}"
       width="96"
       height="96"
       alt=""

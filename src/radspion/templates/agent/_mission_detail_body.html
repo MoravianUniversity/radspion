@@ -1,74 +1,100 @@
-<header class="mission-detail__header">
-  <h1 class="mission-detail__title">{{ mission.title }}</h1>
-  <p class="mission-detail__meta text-mono">
-    {{ mission.slug }} ·
-    <span class="status-badge status-badge--{{ mission.status }}">{{ mission.status }}</span>
+{# Mission page body — Figma "Radsipon - Desktop - Mission Brief" (13:2), see
+   _staticfiles/README.md. Two columns: the brief's prose on the left, Recover
+   Data on the right, a hairline divider between.
+
+   Deviations the README records: no "Mission:" title prefix (the breadcrumb
+   already says it); the slug and status badge join the breadcrumb row (the
+   badge is the only thing on the page naming the state); "Recovered Data",
+   the app's and the database's term, not Figma's "Recover Data". The
+   completed state is invented — Figma only draws the active one: Debrief
+   open with the Brief folded under it, and the archived data in the column
+   the submit form occupies while the mission is active. #}
+<header class="brief__head">
+  <h1 class="brief__title mission-detail__title">{{ mission.title }}</h1>
+  <p class="crumb">
+    {# The author preview app has no agent blueprint, so its crumb is inert. #}
+    <a class="crumb__link" href="{{ '#' if is_preview else url_for('agent.dashboard') }}">
+      <svg class="crumb__arrow" viewBox="0 0 10.5 7.364" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M10.3536 4.03553C10.5488 3.84027 10.5488 3.52369 10.3536 3.32843L7.17157 0.146447C6.97631 -0.0488155 6.65973 -0.0488155 6.46447 0.146447C6.2692 0.341709 6.2692 0.658291 6.46447 0.853554L9.29289 3.68198L6.46447 6.51041C6.2692 6.70567 6.2692 7.02225 6.46447 7.21751C6.65973 7.41278 6.97631 7.41278 7.17157 7.21751L10.3536 4.03553ZM0 3.68198V4.18198H10V3.68198V3.18198H0V3.68198Z"/>
+      </svg>
+      Missions / {{ mission.title }}
+    </a>
+    <span class="mission-detail__meta text-mono">
+      {{ mission.slug }} ·
+      <span class="status-badge status-badge--{{ mission.status }}">{{ mission.status }}</span>
+    </span>
   </p>
 </header>
 
-{% if mission.status == 'active' %}
-  <section class="mission-detail__section mission-content-panel" aria-labelledby="brief-heading">
-    <div class="mission-panel__header">
-      <h2 id="brief-heading" class="mission-panel__title">Mission Brief</h2>
-    </div>
-    <article class="mission-markdown markdown-body">{{ mission.brief_html }}</article>
-  </section>
+<div class="brief-columns">
+  <div class="brief-columns__main">
+    {% if mission.status == 'active' %}
+      <section class="mission-detail__section mission-content-panel" aria-labelledby="brief-heading">
+        {# Per Figma, an active mission shows no visible "Mission Brief"
+           heading — the page title names it. The h2 stays for screen readers. #}
+        <div class="mission-panel__header">
+          <h2 id="brief-heading" class="mission-panel__title visually-hidden">Mission Brief</h2>
+        </div>
+        <article class="mission-markdown markdown-body">{{ mission.brief_html }}</article>
+      </section>
+    {% else %}
+      <section class="mission-detail__section mission-content-panel" aria-labelledby="debrief-heading">
+        <details class="mission-panel__collapse" open>
+          <summary class="mission-panel__summary">
+            {% include "agent/_mission_chevron.html" %}
+            <h2 id="debrief-heading" class="mission-panel__title">Mission Debrief</h2>
+          </summary>
+          <article class="mission-markdown markdown-body">{{ mission.debrief_html }}</article>
+        </details>
+      </section>
 
-  <section class="mission-detail__section recovered-data-panel" aria-labelledby="recovered-data-heading">
-    <h2 id="recovered-data-heading" class="mission-panel__title">Recovered Data</h2>
-    <p class="recovered-data-panel__lede text-muted">
-      Enter the data you recovered from this mission. Spacing and line breaks must be exact.
-    </p>
-    <form class="recovered-data-form recovered-data-form--multiline" action="#" method="post" data-mission-slug="{{ mission.slug }}">
-      <label class="sr-only" for="recovered-data-input">Field data</label>
-      <textarea
-        class="recovered-data-form__input recovered-data-form__textarea text-mono"
-        id="recovered-data-input"
-        name="completion_data"
-        rows="8"
-        autocomplete="off"
-        autocapitalize="off"
-        autocorrect="off"
-        spellcheck="false"
-        wrap="off"
-        placeholder="Field data"
-      ></textarea>
-      <button class="recovered-data-form__submit" type="submit">Submit data</button>
-    </form>
-  </section>
-{% else %}
-  <section class="mission-detail__section recovered-data-panel" aria-labelledby="recovered-data-heading">
-    <details class="mission-panel__collapse">
-      <summary class="mission-panel__summary">
-        {% include "agent/_mission_chevron.html" %}
-        <h2 id="recovered-data-heading" class="mission-panel__title">Recovered Data</h2>
-      </summary>
-      <p class="recovered-data-panel__lede text-muted">
-        The following data is secured in agency archives.
+      <section class="mission-detail__section mission-content-panel" aria-labelledby="brief-heading">
+        <details class="mission-panel__collapse">
+          <summary class="mission-panel__summary">
+            {% include "agent/_mission_chevron.html" %}
+            <h2 id="brief-heading" class="mission-panel__title">Mission Brief</h2>
+          </summary>
+          <article class="mission-markdown markdown-body">{{ mission.brief_html }}</article>
+        </details>
+      </section>
+    {% endif %}
+  </div>
+
+  <aside class="recover" aria-labelledby="recovered-data-heading">
+    {% if mission.status == 'active' %}
+      <h2 id="recovered-data-heading" class="recover__title">Recovered Data</h2>
+      <p class="recover__lede recovered-data-panel__lede text-muted">
+        Enter the data you recovered from this mission. Spacing and line breaks must be exact.
       </p>
-      <div class="recovered-data__block">
-        <pre class="recovered-data__value text-mono">{{ mission.recovered_data }}</pre>
-      </div>
-    </details>
-  </section>
-
-  <section class="mission-detail__section mission-content-panel" aria-labelledby="debrief-heading">
-    <details class="mission-panel__collapse" open>
-      <summary class="mission-panel__summary">
-        {% include "agent/_mission_chevron.html" %}
-        <h2 id="debrief-heading" class="mission-panel__title">Mission Debrief</h2>
-      </summary>
-      <article class="mission-markdown markdown-body">{{ mission.debrief_html }}</article>
-    </details>
-  </section>
-
-  <section class="mission-detail__section mission-content-panel" aria-labelledby="brief-heading">
-    <details class="mission-panel__collapse">
-      <summary class="mission-panel__summary">
-        {% include "agent/_mission_chevron.html" %}
-        <h2 id="brief-heading" class="mission-panel__title">Mission Brief</h2>
-      </summary>
-      <article class="mission-markdown markdown-body">{{ mission.brief_html }}</article>
-    </details>
-  </section>
-{% endif %}
+      <form class="recover__form recovered-data-form recovered-data-form--multiline" action="#" method="post" data-mission-slug="{{ mission.slug }}">
+        <label class="sr-only visually-hidden" for="recovered-data-input">Field data</label>
+        <textarea
+          class="recover__input recovered-data-form__input recovered-data-form__textarea text-mono"
+          id="recovered-data-input"
+          name="completion_data"
+          rows="8"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          wrap="off"
+          placeholder="Field data"
+        ></textarea>
+        <button class="recover__submit recovered-data-form__submit" type="submit">Submit data</button>
+      </form>
+    {% else %}
+      <details class="mission-panel__collapse">
+        <summary class="mission-panel__summary">
+          {% include "agent/_mission_chevron.html" %}
+          <h2 id="recovered-data-heading" class="recover__title mission-panel__title">Recovered Data</h2>
+        </summary>
+        <p class="recover__lede recovered-data-panel__lede text-muted">
+          The following data is secured in agency archives.
+        </p>
+        <div class="recovered-data__block">
+          <pre class="recovered-data__value text-mono">{{ mission.recovered_data }}</pre>
+        </div>
+      </details>
+    {% endif %}
+  </aside>
+</div>

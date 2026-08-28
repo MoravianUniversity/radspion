@@ -1,0 +1,3827 @@
+/* Radspion — static prototypes, single stylesheet (no build step).
+ *
+ * Figma file wNXLWEhSNgpQnVMc5o0DfA:
+ *   index.html         <- "Radsipon - Desktop"                    node 1:2
+ *   dashboard.html     <- "Radsipon - Desktop - Mission Dashboard" node 6:154
+ *   mission-brief.html <- "Radsipon - Desktop - Mission Brief"     node 13:2
+ *
+ * Metrics are the Figma values verbatim (1728px-wide artboards). Colours map to
+ * the Figma variable collection; names in comments are the Figma variable names so
+ * the two stay traceable.
+ *
+ * Layout, in order:
+ *   1. tokens
+ *   2. reset + utilities (focus ring, visually-hidden)
+ *   3. shared surfaces — `.frame` and the `.panel` fade used by both pages
+ *   4. landing page
+ *   5. mission dashboard
+ *   6. mission brief
+ */
+
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+  /* Colour */
+  --color-bg: #000000;                          /* artboard fill */
+  --color-hero-scrim: rgba(10, 9, 8, 0.95);     /* darkening layer over hero photo */
+  --color-gold: #b5842c;                        /* Figma: Secondary */
+  --color-gold-dim: #7f6f3f;                    /* Figma: Tertiary / Frame Fill / Frame Stroke */
+  --color-gold-light: #b5a16f;                  /* tagline + logo mid-tone */
+  --color-sub: #2f2712;                         /* Figma: Sub — read / locked / muted */
+  --color-success: #20561b;                     /* status dots: secure / online / completed */
+  --color-text: #ffffff;                        /* Figma: White */
+  --color-panel-fill: rgba(127, 111, 63, 0.05); /* Tertiary @ 5% */
+  --color-panel-stroke: rgba(127, 111, 63, 0.17);
+
+  /* Type. Figma reports "Slight Chance" on every text layer; it ships from Adobe
+   * Fonts as the family `slight-chance`, served by the kit linked in the document
+   * head. The kit provides a single face (weight 400, normal) — so nothing here
+   * should ask for a heavier weight or browsers will synthesise one. */
+  --font-display: "slight-chance", "Rajdhani", system-ui, sans-serif;
+
+  --size-main: 60px;    /* Figma: MAIN */
+  --size-h1: 40px;      /* Figma: H1 */
+  --size-h2: 24px;      /* Figma: H2 */
+  --size-body: 20px;    /* Figma: Large P */
+  --size-reg: 16px;     /* Figma: Reg P */
+  --size-small: 14px;   /* Figma: Mini P */
+  --size-micro: 12px;   /* Figma: Small Sub Header */
+
+  /* Geometry */
+  --radius-sm: 2px;
+  --width-frame: 1728px;
+  --width-content: 600px;
+  --height-hero: 584px;
+  --height-lower: 662px;
+}
+
+/* ----------------------------------------------------------------- reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto; /* keep aspect ratio when max-width shrinks the vector lockups */
+}
+
+/* Accessible label that carries the brand name for the vector wordmark. */
+/* A single focus ring for every interactive element on both pages, replacing the
+ * ten near-identical per-component rules the two files used to carry. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ----------------------------------------------------------------- panels */
+
+/* One surface treatment shared by every framed thing on both pages: a hairline
+ * gold rule over a 5% gold wash. `.frame` is the plain version; the fade below
+ * layers a mask on top of the same surface. */
+.frame,
+.panel::before,
+.auth::before,
+.statusbox,
+.topbar {
+  background-color: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+}
+
+/* The bar spans the whole canvas, so it takes the wash without the rule. */
+.topbar {
+  border: 0;
+  border-radius: 0;
+}
+
+/* The recurring "Fade" panel, used across both screens. Every panel in this design
+ * is a frame sitting under an alpha mask whose rect is rotated 180° in Figma — its
+ * reported origin is the mask frame's bottom-right corner — so the underlying
+ * 0 -> 1 gradient paints inverted: solid along the top edge, dissolving downward,
+ * gone by 136px.
+ *
+ * The mask covers only the chrome. In Figma it lives on the "Fade" wrapper around
+ * the panel rect while the panel's text sits in a sibling group outside it, so
+ * content stays fully opaque — hence drawing the chrome in ::before.
+ *
+ * Per-panel overrides: --fade-w / --fade-h / --fade-x / --fade-y are the Figma
+ * mask-size and mask-position; --panel-h is the frame's own height when it differs
+ * from the element (e.g. a 288px frame behind a much taller content column). */
+.panel,
+.auth {
+  position: relative;
+}
+
+.panel::before,
+.auth::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: var(--panel-h, 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: var(--fade-w, 100%) var(--fade-h, 155px);
+  mask-size: var(--fade-w, 100%) var(--fade-h, 155px);
+  -webkit-mask-position: var(--fade-x, 0px) var(--fade-y, -19px);
+  mask-position: var(--fade-x, 0px) var(--fade-y, -19px);
+  pointer-events: none;
+}
+
+/* Keep content above the chrome. */
+.panel > *,
+.auth > * {
+  position: relative;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+/* Figma "TOP BKG" (5:118) + "LOGO" (5:119): a 1728x584 photographic band under a
+ * 95%-opaque scrim, with the lockup starting 123px from the top. */
+.hero {
+  position: relative;
+  height: var(--height-hero);
+  padding-top: 123px;
+  background-image:
+    linear-gradient(var(--color-hero-scrim), var(--color-hero-scrim)),
+    url("../img/landing-hero.jpg");
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, center;
+  background-size: cover, cover;
+}
+
+.hero__lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 208.694px square in Figma (5:113). */
+.hero__mark {
+  width: 208.694px;
+  height: 208.694px;
+}
+
+/* 679.871 x 49.2351 (5:114), 28.46px below the mark. */
+.hero__wordmark {
+  margin: 28.46px 0 0;
+  width: 679.871px;
+}
+
+/* 370.085 x 28.3864 (5:96), 22.26px below the wordmark. */
+.hero__tagline {
+  margin-top: 22.26px;
+  width: 370.085px;
+}
+
+/* ------------------------------------------------------------ lower body */
+
+/* Figma "Mask group" (6:239): a 1624px-diameter gold radial glow centred at
+ * (864, 381) inside the 1728x662 band, clipped to the band. */
+.body-panel {
+  position: relative;
+  padding-top: 106px;   /* heading box sits at y=690; hero ends at 584 */
+  padding-bottom: 38px; /* artboard ends at 1246 */
+}
+
+/* Sticky footer on the landing: the body is a full-height column, the body
+ * panel takes the slack, and its footer drops to the bottom (keeping the
+ * designed 92px gap as a minimum) rather than floating under the auth panel. */
+body.page-landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-landing .hero {
+  flex-shrink: 0;
+}
+
+.page-landing .body-panel {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-landing .body-panel > .site-footer {
+  margin-top: auto;
+  padding-top: 92px;
+}
+
+.body-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--height-lower);
+  /* Figma's gradient darkens #B5842C -> #212121 *while* its opacity ramps 1 -> 0.
+   * A two-stop CSS gradient interpolates premultiplied and so stays bright much
+   * too far out (measured ~10/255 too light mid-radius). These intermediate stops
+   * sample the real curve so the falloff matches. */
+  background-image: radial-gradient(
+    circle 812px at 50% 381px,
+    rgba(181, 132, 44, 0.27) 0%,
+    rgba(162, 120, 43, 0.2363) 12%,
+    rgba(144, 107, 41, 0.2025) 25%,
+    rgba(126, 95, 40, 0.1688) 38%,
+    rgba(107, 82, 38, 0.135) 50%,
+    rgba(88, 70, 37, 0.1013) 62%,
+    rgba(70, 58, 36, 0.0675) 75%,
+    rgba(52, 45, 34, 0.0338) 88%,
+    rgba(33, 33, 33, 0) 100%
+  );
+  pointer-events: none;
+}
+
+/* Keep real content above the glow. */
+.body-panel > * {
+  position: relative;
+}
+
+/* --------------------------------------------------------------- heading */
+
+/* Figma "HEADING" (6:229): 600x75 box, 40px gold caps optically centred. */
+.designation {
+  display: grid;
+  place-items: center;
+  width: var(--width-content);
+  height: 75px;
+  margin: 0 auto;
+}
+
+.designation__text {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h1);
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+  text-align: center;
+  max-width: 100%;
+}
+
+/* 20px white copy, 17px below the heading box. */
+.briefing {
+  margin: 17px auto 0;
+  max-width: var(--width-content);
+  text-align: center;
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+/* ------------------------------------------------------------------ auth */
+
+/* Figma "AUTH" (6:231). The panel is a 600x288 frame under an alpha mask
+ * ("Fade", 6:244) that ramps 0 -> 1 across 155px offset -19px, so nothing below
+ * y=136 ever paints. Height is set to that visible 136px so the mask governs
+ * appearance only and the flow layout stays honest. */
+.auth {
+  --fade-w: 668px;
+  --fade-x: -34px;
+  width: var(--width-content);
+  height: 136px;
+  margin: 70px auto 0;
+  padding-top: 32px;
+}
+
+.auth__heading {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: normal;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* Figma ships this as a flat 352x54 bitmap ("image 1", 5:147). Rebuilt as a real
+ * link with the Google mark inline so it is focusable, translatable and crisp.
+ *
+ * Deliberate deviation: that bitmap is a screenshot carrying ~21px of vertical
+ * padding (its white area is only 68% of the asset height), so the button *looks*
+ * ~37px tall in the mockup even though its frame is 54px. This uses the declared
+ * 54px — it matches the frame and clears the 44px minimum touch target that 37px
+ * would fail. */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 352px;
+  height: 54px;
+  margin: 7px auto 0;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: #1f1f1f;
+  font-family: "Roboto", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.btn-google:hover {
+  background-color: #f2f2f2;
+}
+
+.btn-google__icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- footer */
+
+/* Figma "FOOTER" (5:152): 14px dimmed gold, first line 92px below the visible
+ * bottom edge of the auth panel. */
+.site-footer {
+  margin-top: 92px;
+  text-align: center;
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+  line-height: 1.2;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* Scoped with the parent so this outranks the `.site-footer p` reset above —
+ * `.site-footer p` is (0,1,1) and would otherwise win against a lone class. */
+.site-footer .site-footer__legal {
+  margin-top: 29px; /* 1174 - (1128 + 17) */
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-underline-position: from-font;
+}
+
+.site-footer a:hover {
+  color: var(--color-gold);
+}
+
+/* ------------------------------------------------------------ responsive */
+
+/* The Figma frame is desktop-only. These rules keep narrow viewports usable
+ * without altering the desktop rendering. */
+@media (max-width: 1100px) {
+  .hero__wordmark {
+    width: min(679.871px, 78vw);
+  }
+
+  .hero__tagline {
+    width: min(370.085px, 46vw);
+  }
+}
+
+@media (max-width: 760px) {
+  /* Scoped to the landing page rather than away from the fixed-canvas screens:
+   * the dashboard and brief have no narrow-viewport design and must not shrink
+   * their type while their canvas stays a fixed 1728px wide. */
+  body.page-landing {
+    --size-h1: 28px;
+    --size-h2: 20px;
+    --size-body: 17px;
+    --width-content: 100%;
+  }
+
+  .hero {
+    height: auto;
+    padding: 64px 20px 72px;
+  }
+
+  .hero__mark {
+    width: 128px;
+    height: 128px;
+  }
+
+  .body-panel {
+    padding: 56px 20px 40px;
+  }
+
+  /* `place-items: center` sizes the grid item to max-content, so the heading
+   * cannot wrap and overflows narrow viewports. Plain block flow lets it wrap. */
+  .designation {
+    display: block;
+    height: auto;
+    padding: 14px 16px;
+  }
+
+  .auth {
+    height: auto;
+    padding: 28px 16px 32px;
+  }
+
+  /* The fixed-pixel fade does not translate to fluid widths; the panel reads as
+   * a plain frame here. */
+  .auth::before {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .btn-google {
+    width: 100%;
+    max-width: 352px;
+  }
+
+  .site-footer {
+    margin-top: 56px;
+  }
+}
+
+
+/* =========================================================================
+ * MISSION DASHBOARD
+ * Ported from Figma "Radsipon - Desktop - Mission Dashboard", node 6:154.
+ * Metrics are Figma values, frame-relative (the frame sits at y=1528 on the
+ * canvas, so 1528 is subtracted throughout).
+ *
+ * No narrow-viewport design exists for this screen, so the canvas is a fixed
+ * 1728px and the page scrolls horizontally below that rather than inventing a
+ * responsive layout the design does not specify.
+ * ========================================================================= */
+
+.page-dashboard,
+.page-brief {
+  font-size: var(--size-reg);
+}
+
+.canvas {
+  position: relative;
+  z-index: 1;
+  width: var(--width-frame);
+  margin: 0 auto;
+  /* Clips the gold glow (::before) to the canvas, so it can never extend the
+   * scroll area below the footer — the body's min-height:100vh computes larger
+   * than the usable height in some embedded viewports, which otherwise left a
+   * phantom gap under the footer. */
+  overflow: hidden;
+}
+
+/* Figma "grad" (6:240): a 1624px gold radial centred at (102, 188). Painted on
+ * the canvas (whose height tracks real content) rather than the body, so its
+ * height is honest; clipped by the canvas's overflow above. */
+.canvas::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 1501px;
+  background-image: radial-gradient(
+    circle 812px at 102px 188px,
+    rgba(181, 132, 44, 0.27) 0%,
+    rgba(162, 120, 43, 0.2363) 12%,
+    rgba(144, 107, 41, 0.2025) 25%,
+    rgba(126, 95, 40, 0.1688) 38%,
+    rgba(107, 82, 38, 0.135) 50%,
+    rgba(88, 70, 37, 0.1013) 62%,
+    rgba(70, 58, 36, 0.0675) 75%,
+    rgba(52, 45, 34, 0.0338) 88%,
+    rgba(33, 33, 33, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Canvas children sit above the glow (which is a positioned ::before at z-index
+ * 0, so non-positioned siblings would otherwise paint beneath it). */
+.canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sticky footer: the signed-in shell fills at least the viewport, so the footer
+ * band sits at the bottom on short pages instead of floating up under the
+ * content. The shell (topbar + rail + content) grows to take the slack. */
+.page-v2 .canvas {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-v2 .shell,
+.page-v2 .content--preview {
+  flex: 1 0 auto;
+}
+
+.page-v2 .footer-band {
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- top bar */
+
+/* Figma "HEADER BAR" (13:202): 1728x100 over a 5% gold wash. Items are absolutely
+ * placed at their Figma x offsets — this is fixed chrome on a fixed canvas, so
+ * exact offsets are clearer here than a flex approximation. */
+.topbar {
+  position: relative;
+  height: 100px;
+}
+
+.topbar__logo {
+  position: absolute;
+  left: 48px;
+  top: 19px;
+  width: 62px;
+  height: 62px;
+}
+
+/* Hairline dividers (`sep`, #7F6F3F @ 17%) at their measured x positions. */
+.topbar__sep {
+  position: absolute;
+  width: 1px;
+  background-color: var(--color-panel-stroke);
+}
+
+.topbar__sep--1 { left: 174px;  top: 8px;  height: 80px; }
+.topbar__sep--2 { left: 349px;  top: 10px; height: 80px; }
+.topbar__sep--3 { left: 1043px; top: 11px; height: 80px; }
+.topbar__sep--4 { left: 1391px; top: 12px; height: 80px; }
+.topbar__sep--5 { left: 1565px; top: 10px; height: 80px; }
+
+.topbar__group {
+  position: absolute;
+}
+
+.topbar__group--agent    { left: 190px;  top: 24px; }
+.topbar__group--clear    { left: 369px;  top: 22px; }
+.topbar__group--network  { left: 1063px; top: 22px; }
+.topbar__group--uplink   { left: 1170px; top: 22px; }
+.topbar__group--time     { left: 1407px; top: 22px; }
+
+/* 12px dimmed-gold field labels throughout the bar. `display: block` matters:
+ * as an inline box the <label> would inherit the group's 16px strut and lay out a
+ * 19.2px line instead of 12px x 1.2, pushing everything under it down. */
+.topbar__label {
+  display: block;
+  margin: 0;
+  color: var(--color-gold-dim);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+}
+
+.topbar__label--gold {
+  color: var(--color-gold);
+}
+
+.topbar__value {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+}
+
+.topbar__agent-name {
+  margin: 4px 0 3px;
+  color: var(--color-text);
+  font-size: var(--size-reg);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* Clearance code: input and submit share one 2px-radius pill, split down the
+ * middle — the input carries the left radius, the button the right. */
+.clearance {
+  display: flex;
+  margin-top: 5.6px; /* 22 + 14.4 label = 36.4 -> control top 42 */
+}
+
+.clearance__input {
+  width: 190px;   /* 369 -> 559 */
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background-color: var(--color-panel-fill);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--size-micro);
+}
+
+.clearance__submit {
+  width: 111px;   /* 559 -> 670 */
+  height: 30px;
+  border: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background-color: var(--color-gold);
+  color: #000000;
+  font-family: inherit;
+  font-size: var(--size-micro);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.clearance__submit:hover {
+  background-color: var(--color-gold-light);
+}
+
+/* Status readouts: a bordered box with a solid state dot. */
+.statusbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 87px;    /* fixed in Figma despite "Secure" / "Online" differing */
+  height: 30px;
+  margin-top: 5.6px; /* -> box top 42 */
+  padding: 0 10px;
+  font-size: var(--size-micro);
+}
+
+.statusbox__dot {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  background-color: var(--color-success);
+}
+
+.topbar__time {
+  margin-top: 13.6px; /* value top 50 */
+}
+
+/* The avatar placeholder is dropped; a plain "Logout" control sits at the bar's
+ * right edge (the profile group right-aligns against the canvas edge). */
+.topbar__profile {
+  position: absolute;
+  right: 48px;
+  top: 25px;
+  display: flex;
+  align-items: center;
+  height: 50px;
+}
+
+.topbar__logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-gold);
+  font-family: inherit;
+  font-size: var(--size-small);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.topbar__logout:hover {
+  color: var(--color-gold-light);
+}
+
+.topbar__logout-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* ----------------------------------------------------------------- shell */
+
+.shell {
+  display: grid;
+  grid-template-columns: 102px 1fr;
+}
+
+/* Figma "SIDEBAR" (7:83): a hairline rule down x=102 with a 5px-wide gold
+ * segment marking the active section. The segment now belongs to the active
+ * rail item, so it slides to whichever section is selected. */
+.rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-top: 64px; /* first icon near Figma's y=176.5; header ends at 100 */
+}
+
+.rail::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50px;    /* y=150 */
+  width: 1px;
+  height: 970px;
+  background-color: var(--color-panel-stroke);
+}
+
+/* Each nav item; the active one paints the gold segment at the rail's edge,
+ * vertically centred on its icon. */
+.rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 52px;
+  color: var(--color-gold-dim);
+}
+
+.rail__link:hover {
+  color: var(--color-gold);
+}
+
+.rail__link--active {
+  color: var(--color-gold);
+}
+
+.rail__link--active::after {
+  content: "";
+  position: absolute;
+  right: -22px; /* reaches the rail's right edge, 5px straddling the rule */
+  top: 50%;
+  width: 5px;
+  height: 80px;
+  transform: translateY(-50%);
+  background-color: var(--color-gold);
+}
+
+.rail__icon {
+  display: block;
+}
+
+.rail__icon--home {
+  width: 27.53px;
+  height: 23.78px;
+}
+
+.rail__icon--data,
+.rail__icon--file {
+  width: 25px;
+  height: 25px;
+}
+
+/* Content column. Panels align on x=174/175; the page title sits at x=171. */
+.content {
+  padding: 58px 143px 0 69px;
+}
+
+/* ------------------------------------------------------------ page title */
+
+.pagehead {
+  margin: 0;
+}
+
+.pagehead__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-main);
+  font-weight: 400;
+  line-height: 64px; /* 158 -> 222, where the subtitle starts */
+  text-transform: uppercase;
+}
+
+.pagehead__sub {
+  margin: 0 0 0 3px; /* title x=171, subtitle x=174 */
+  color: var(--color-text);
+  font-size: var(--size-small);
+  line-height: 1.2;
+}
+
+/* ----------------------------------------------------- welcome + messages */
+
+.panelrow {
+  display: flex;
+  gap: 11px;        /* 859 -> 870 */
+  margin-top: 39.2px; /* subtitle ends 238.8; panel rects start 278 */
+  margin-left: 3px;   /* content padding lands on 171; panels start 174 */
+}
+
+.welcome {
+  --fade-w: 731px;
+  --fade-x: -34px;
+  width: 685px;
+  height: 136px;
+  padding: 31px 0 0 34px; /* heading y=309, x=208 */
+}
+
+.welcome__title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  /* Explicit 26px (the Figma box). `normal` resolves to 37px for this face, which
+   * pushed the body copy 11px low. */
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+.welcome__body {
+  margin: 16px 0 0; /* 309 + 26 -> 351 */
+  max-width: 630px;
+  font-size: var(--size-reg);
+  line-height: 1.2;
+}
+
+.mail {
+  --fade-w: 763px;
+  --fade-x: -34px;
+  width: 684px;
+  height: 136px;
+  padding: 31px 0 0 26.5px; /* icon x=896.5 within a panel at x=870 */
+}
+
+.mail__head {
+  display: flex;
+  align-items: center;
+  gap: 9.5px; /* icon ends 911.5, text starts 921 */
+}
+
+.mail__icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: var(--color-gold);
+}
+
+.mail__title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 26px; /* see .welcome__title */
+  text-transform: uppercase;
+}
+
+.mail__list {
+  margin: 16px 0 0; /* 309 + 26 -> 351 */
+  padding: 0;
+  list-style: none;
+}
+
+/* Each row: bullet at x=901, link at 914, state block at 1379. */
+.msg {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  height: 40px; /* rows at 351 and 391 */
+  padding-left: 4.5px;
+  font-size: var(--size-reg);
+}
+
+.msg__dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  margin-top: 7px;
+  background-color: currentcolor;
+}
+
+.msg__link {
+  margin-left: 8px;
+  color: inherit;
+  line-height: 1.2;
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-underline-position: from-font;
+}
+
+.msg--read {
+  color: var(--color-sub);
+}
+
+.msg--unread {
+  color: var(--color-gold);
+}
+
+/* Pinned to a fixed x (1379) rather than pushed with an auto margin, because the
+ * two labels differ in width ("Read" vs "Unread") and would not line up. */
+.msg__state {
+  position: absolute;
+  left: 482.5px; /* 1379 against a row starting at 896.5 */
+  top: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.msg__swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  margin-top: 5px;
+  background-color: currentcolor;
+}
+
+.msg__statelabel {
+  color: var(--color-text);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+  margin-top: 3px;
+}
+
+/* Unread count, straddling the panel's top-right corner (1535, 262).
+ * Scoped with the parent so it outranks `.panel > *`, which is also (0,1,0). */
+.mail .mail__badge {
+  position: absolute;
+  margin: 0; /* a <p>'s 1em default still applies under position:absolute */
+  left: 665px;
+  top: -16px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-gold-dim);
+  background-color: var(--color-sub);
+  color: var(--color-text);
+  font-size: var(--size-reg);
+}
+
+/* ----------------------------------------------------------------- cards */
+
+.cards {
+  display: flex;
+  margin-top: 56px; /* panels end 414; cards start 470 */
+  margin-left: 4px; /* cards start x=175 */
+}
+
+.card {
+  --fade-w: 340px;
+  --fade-x: -4px;
+  width: 333.333px;
+  height: 136px;
+  padding-top: 34px; /* title y=504 within a panel at 470 */
+  text-align: center;
+}
+
+.card + .card {
+  margin-left: 14.667px; /* 508.333 -> 523 */
+}
+
+/* The third card is slightly wider and sits 3px further out in Figma. */
+.card--stats {
+  --fade-w: 348px;
+  --fade-x: -3px;
+  width: 334px;
+}
+
+/* Needs to outrank `.card + .card` above, which is also a two-class selector. */
+.card + .card--stats {
+  margin-left: 17.667px; /* 856.333 -> 874 */
+}
+
+.card__label {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+.card__value {
+  margin: 6px 0 0; /* 504 + 24 -> 534 */
+  color: var(--color-gold);
+  font-size: var(--size-main);
+  font-weight: 400;
+  line-height: normal;
+}
+
+.card__meta {
+  margin: 15px 0 0; /* 504 + 24 -> 543 */
+  color: var(--color-gold-dim);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+}
+
+/* -------------------------------------------------------------- missions */
+
+.missions {
+  --fade-w: 1448px;
+  --fade-x: -38px;
+  --panel-h: 288px;
+  width: 1379px;
+  margin-top: 45px; /* cards end 606; panel starts 651 */
+  margin-left: 4px;
+  padding: 32px 0 0 33px; /* "MISSIONS" at (208, 683) */
+}
+
+.missions__head {
+  position: relative;
+}
+
+.missions__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h1);
+  font-weight: 400;
+  line-height: 43px;
+  text-transform: uppercase;
+}
+
+/* Checkbox at x=519, label at 544 — pinned 311px right of the content edge (208)
+ * rather than flowed after the heading, whose width depends on font metrics. */
+.showcomp {
+  position: absolute;
+  left: 311px;
+  top: 13px; /* label y=696 against the heading's 683 */
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.showcomp__box {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin: 2px 0 0;
+  appearance: none;
+  border: 0;
+  background-color: var(--color-gold);
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------- mission group */
+
+/* Built on <details>/<summary> so the disclosure actually works with no
+ * JavaScript, which keeps this prototype pure HTML/CSS. */
+.mgroup {
+  margin-top: 20px; /* "MISSIONS" box ends 726; group heading at 746 */
+}
+
+/* Figma's own gaps: an open group's table ends at 982 with the next heading at
+ * 1031, while heading 02 ends 1057 with heading 03 at 1077. */
+.mgroup[open] + .mgroup {
+  margin-top: 49px;
+}
+
+.mgroup:not([open]) + .mgroup {
+  margin-top: 20px;
+}
+
+.mgroup__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  list-style: none;
+  cursor: pointer;
+}
+
+/* Suppress the native disclosure triangle in both engines. */
+.mgroup__head::-webkit-details-marker {
+  display: none;
+}
+
+.mgroup__head::marker {
+  content: "";
+}
+
+/* The chevron rotates in place rather than being hand-placed per state. Figma's
+ * two carets disagree with each other by ~4px horizontally and ~6px vertically
+ * between the open and closed headings; centring on the title's line box lands
+ * between them and is the visually correct reading. */
+.mgroup__caret {
+  width: 10.241px;
+  height: 5.957px;
+  flex: none;
+  margin-left: 11.24px; /* caret at x=219.24 against content starting at 208 */
+  color: var(--color-text);
+  transform: rotate(90deg); /* closed: chevron points right */
+  transition: transform 120ms ease;
+}
+
+.mgroup[open] .mgroup__caret {
+  transform: rotate(180deg); /* open: chevron points down */
+}
+
+.mgroup__title {
+  margin: 0 0 0 8.52px; /* title at x=238 */
+  color: var(--color-text);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+/* Pinned like the other fixed-x labels — the three counts differ in width
+ * ("2 active" / "1 active" / "Locked") so an auto margin would stagger them. */
+.mgroup__count {
+  position: absolute;
+  left: 219px; /* x=427 against content starting at 208 */
+  color: var(--color-gold-light);
+  font-size: var(--size-small);
+  line-height: 1.2;
+}
+
+/* Figma sets the closed headings' counts at x=422 against the open one's 427. */
+.mgroup:not([open]) .mgroup__count {
+  left: 214px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mgroup__caret {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------- mission table */
+
+/* Figma "MISSION UI" (7:246): three vertical rules at x=251 / 685 / 1033, each
+ * 199px tall — exactly the header row plus four data rows.
+ *
+ * Drawn as repeating gradients rather than `border-left: dotted` because Figma
+ * specifies stroke-dasharray "2 2", which a 1px CSS dotted border cannot match.
+ * They are painted once on the table, not per cell: per-cell backgrounds restart
+ * the dash pattern at every row boundary, and the 38px header row is not a
+ * multiple of the 4px period, so the phase drifted down the column. */
+.mtable {
+  margin: 11px 0 0 43px; /* table left edge x=251, 11px below the group heading */
+  border-collapse: collapse;
+  table-layout: fixed;
+  background-image:
+    repeating-linear-gradient(to bottom, var(--color-gold) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(to bottom, var(--color-sub) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(to bottom, var(--color-sub) 0 2px, transparent 2px 4px);
+  background-size: 1px 100%;
+  background-position: 0 0, 434px 0, 782px 0; /* x = 251 / 685 / 1033 */
+  background-repeat: no-repeat;
+}
+
+.mtable th,
+.mtable td {
+  padding: 0;
+  text-align: left;
+  vertical-align: top;
+  font-weight: 400;
+}
+
+.mtable__col--id     { width: 97px; }
+.mtable__col--title  { width: 337px; }
+.mtable__col--intel  { width: 348px; }
+.mtable__col--status { width: 121px; }
+.mtable__col--go     { width: 26px; }
+
+.mtable thead th {
+  height: 38px; /* header 783 -> first row 821 */
+  color: var(--color-sub);
+  font-size: var(--size-small);
+  line-height: 1.2;
+}
+
+.mtable thead .mtable__col--id     { padding-left: 13px; } /* "ID" at x=264 */
+.mtable thead .mtable__col--intel  { padding-left: 10px; } /* "Intel" at x=695 */
+.mtable thead .mtable__col--status { padding-left: 12px; } /* "Status" at x=1045 */
+
+.mtable tbody td {
+  height: 40px; /* 40px row pitch; content occupies the top 24px */
+  padding-bottom: 16px;
+}
+
+.mtable tbody .mtable__col--id     { padding-left: 13px; }
+.mtable tbody .mtable__col--intel  { padding-left: 10px; }
+.mtable tbody .mtable__col--status { padding-left: 12px; }
+
+/* Row marker: an 8px gold square straddling the leading rule (x=247 vs 251). */
+.mrow__marker {
+  position: relative;
+}
+
+.mrow__marker::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-gold);
+}
+
+.mrow__id {
+  color: var(--color-gold-dim);
+  font-size: var(--size-body);
+  line-height: 24px;
+}
+
+.mrow__title {
+  color: var(--color-text);
+  font-size: var(--size-body);
+  line-height: 24px;
+}
+
+.mrow--locked .mrow__title {
+  color: var(--color-sub);
+}
+
+/* Intel links, 12px with a trailing enter glyph. */
+.intel {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  height: 24px;
+}
+
+.intel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.intel__link:hover {
+  color: var(--color-gold);
+}
+
+.intel__icon {
+  width: 14px;
+  height: 13px;
+  flex: none;
+  color: currentcolor;
+}
+
+/* Status cell: 10px swatch + 12px caps label. */
+.mstate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 24px;
+  color: var(--color-text);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.mstate__swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background-color: var(--color-gold);
+}
+
+.mstate--done .mstate__swatch   { background-color: var(--color-success); }
+.mstate--locked .mstate__swatch { background-color: var(--color-sub); }
+
+/* Enter / locked affordance at the row's right edge (x=1154). */
+.mgo {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  color: var(--color-gold);
+}
+
+.mgo--done   { color: var(--color-text); }
+.mgo--locked { color: var(--color-sub); }
+
+.mgo svg {
+  width: 14px;
+  height: 13px;
+}
+
+/* Without this the anchor keeps the UA's default link colour and, because the
+ * glyph is filled with currentColor, the icon renders blue instead of inheriting. */
+.mgo a {
+  display: flex;
+  color: inherit;
+}
+
+/* Trailing whitespace on the artboard (content ends 1103, frame ends 1501). */
+.content {
+  padding-bottom: 398px;
+}
+
+
+/* =========================================================================
+ * MISSION BRIEF
+ * Ported from Figma "Radsipon - Desktop - Mission Brief", node 13:2.
+ * Metrics are Figma values, frame-relative (the frame sits at y=1528 on the
+ * canvas, so 1528 is subtracted throughout).
+ *
+ * Same fixed 1728px canvas and same header bar as the dashboard, and the same
+ * "grad" ellipse — node 13:5 has identical geometry to the dashboard's 6:240,
+ * so both share the rule above rather than restating it.
+ *
+ * The prose column is laid out in flow, not pinned to Figma's per-paragraph y
+ * offsets like the dashboard's chrome is. A brief is authored in Markdown and is
+ * arbitrary content of arbitrary length, so what has to hold is the vertical
+ * rhythm between elements, which is what these margins encode.
+ * ========================================================================= */
+
+/* Header 0->100, content 100->1298, footer band 1298->1501. */
+.brief {
+  position: relative;
+  height: 1198px;
+}
+
+/* Figma "menu 1" (13:197): 38px hamburger at (61, 171). */
+.brief__menu {
+  position: absolute;
+  left: 61px;
+  top: 71px; /* 171 - 100 */
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--color-gold);
+  cursor: pointer;
+}
+
+.brief__menu svg {
+  width: 38px;
+  height: 38px;
+}
+
+/* Prose column: x=174, 859 wide, starting at the title's y=158. */
+.brief__main {
+  position: absolute;
+  left: 174px;
+  top: 58px; /* 158 - 100 */
+  width: 859px;
+}
+
+/* 60px gold caps in a 64px box (13:68) — the same treatment as the dashboard's
+ * page title, whose `normal` line-height would otherwise resolve to 37px+ for
+ * this face and push the breadcrumb down. */
+.brief__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-main);
+  font-weight: 400;
+  line-height: 64px;
+  text-transform: uppercase;
+}
+
+/* Breadcrumb (13:69) at x=194 with the back arrow (13:195) 10px to its left. */
+.crumb {
+  margin: 0 0 0 10px;
+  font-size: var(--size-small);
+  /* Zeroed on the block so the paragraph's own strut does not add leading under
+   * the inline-flex link; the link restores the real line-height. Without this
+   * the box measures 18.7px against Figma's 17 and shifts the whole column. */
+  line-height: 0;
+}
+
+.crumb__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px; /* arrow at 184, text at 194 */
+  line-height: 1.2;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.crumb__link:hover {
+  color: var(--color-gold);
+}
+
+.crumb__arrow {
+  width: 10px;
+  height: 7.364px;
+  flex: none;
+  transform: rotate(180deg); /* Figma rotates the shared arrow to point back */
+}
+
+/* Hairlines at y=289 and y=425, both spanning the prose column. */
+.brief__rule {
+  height: 0;
+  margin: 50px 0 0; /* breadcrumb ends 239 -> 289 */
+  border: 0;
+  border-top: 1px solid var(--color-panel-stroke);
+}
+
+/* FROM / RE / CLASSIFICATION (13:199) at y=319, 20px, gold labels on white. */
+.memo {
+  margin: 29px 0 0; /* rule 290 -> 319 */
+  max-width: 534px;
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+.memo__label {
+  color: var(--color-gold);
+}
+
+/* The second rule sits 34px under the memo's last line. */
+.memo + .brief__rule {
+  margin-top: 34px;
+}
+
+/* Section headings (13:318 / 13:320): 24px gold caps. */
+.brief__h2 {
+  margin: 33px 0 0; /* rule 426 -> 459 */
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  /* Explicit 25px (the Figma box). `normal` resolves to ~37px for this face and
+   * would push the body copy low, exactly as it does on the dashboard panels. */
+  line-height: 25px;
+  text-transform: uppercase;
+}
+
+/* A heading that follows body copy rather than a rule gets the larger gap. */
+.brief__p + .brief__h2,
+.cipher + .brief__h2 {
+  margin-top: 35px;
+}
+
+.brief__p {
+  margin: 11px 0 0; /* heading box ends 484 -> 495 */
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+.brief__p--gold {
+  /* Figma keeps this line in the same text node as the example above it, one
+   * blank line down, so it clears that paragraph by a full line box. */
+  margin-top: 24px;
+  color: var(--color-gold);
+}
+
+/* The key and the plaintext frame break the paragraph rhythm on either side. */
+.cipher + .brief__p {
+  margin-top: 37px;
+}
+
+.plaintext + .brief__p {
+  margin-top: 16px;
+}
+
+.brief__p a {
+  color: var(--color-gold);
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-underline-position: from-font;
+}
+
+.brief__p a:hover {
+  color: var(--color-text);
+}
+
+/* Substitution key (Figma "image 3", 13:326). Figma ships a bitmap 601x183 at
+ * x=162; briefs are Markdown, so this is a real table. The cell metrics are
+ * measured off that bitmap: 26px rows, hairline rules, header letters bold. */
+.cipher {
+  margin: 39px 0 0; /* body copy ends -> table content top 784 */
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--size-reg);
+  line-height: 1.2;
+}
+
+.cipher + .cipher {
+  margin-top: 25px;
+}
+
+.cipher th,
+.cipher td {
+  width: 38.5px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-panel-stroke);
+  color: var(--color-text);
+  font-weight: 400;
+  text-align: center;
+}
+
+/* The label column is wider than the letter cells and left-padded. */
+/* Scoped with the table so this outranks `.cipher th, .cipher td` above, which is
+ * also a two-part selector and would otherwise size the label column as a letter
+ * cell. */
+.cipher .cipher__corner,
+.cipher .cipher__rowhead {
+  width: 76px;
+  padding: 0 10px;
+  text-align: left;
+}
+
+/* The plaintext row is bold in the reference. This is the one place the page asks
+ * for a weight the kit does not ship, so the browser synthesises it — normally a
+ * thing to avoid here (see the --font-display note). It is kept because the
+ * reference bitmap is a screenshot of a Markdown-rendered table in the Markdown
+ * body font, where the bold is real; the app renders briefs the same way, so the
+ * synthesis is a prototype-only stand-in and does not reach production. */
+.cipher thead th {
+  font-weight: 700;
+}
+
+/* "WIRED BY Q" (13:333 / 13:335): a 113x39 frame at (174, 1050), 20px gold. */
+.plaintext {
+  display: inline-block;
+  margin: 18px 0 0;
+  padding: 7px 12px 6px; /* text at (186, 1056) inside a 39px box at (174, 1050) */
+  color: var(--color-gold);
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+/* Vertical rule (13:342) at x=1170, from y=287 down to the footer band. */
+.brief__divider {
+  position: absolute;
+  left: 1170px;
+  top: 187px; /* 287 - 100 */
+  width: 1px;
+  height: 1011px;
+  background-color: var(--color-panel-stroke);
+}
+
+/* ------------------------------------------------------------ recover data */
+
+/* Right column: x=1217, 337 wide. */
+.recover {
+  position: absolute;
+  left: 1217px;
+  top: 189px; /* heading at 289 */
+  width: 337px;
+}
+
+/* 40px gold caps (13:345) in a 25px box, same treatment as the section headings. */
+.recover__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h1);
+  font-weight: 400;
+  line-height: 25px;
+  text-transform: uppercase;
+}
+
+/* Lede (13:346) at y=355, 316 wide — narrower than the column. */
+.recover__lede {
+  margin: 41px 0 0; /* 314 -> 355 */
+  max-width: 316px;
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+.recover__form {
+  margin-top: 24px; /* lede ends 427 -> field top 451 */
+}
+
+/* 337x501 field (13:349). Figma rounds only the left corners here, carried over
+ * from the header's clearance input where the field butts against its button;
+ * this one stands alone, so it takes the full 2px radius. */
+.recover__input {
+  display: block;
+  width: 337px;
+  height: 501px;
+  padding: 10px 12px;
+  background-color: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--size-reg);
+  line-height: 1.4;
+  resize: vertical;
+}
+
+/* 107.8x30 gold button (13:350) 20px below the field. */
+.recover__submit {
+  margin-top: 20px; /* field ends 952 -> button 972 */
+  width: 107.8px;
+  height: 30px;
+  background-color: var(--color-gold);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: #000000;
+  font-family: inherit;
+  font-size: var(--size-micro);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.recover__submit:hover {
+  background-color: var(--color-gold-light);
+}
+
+/* ----------------------------------------------------------- footer band */
+
+/* Figma "FOOTER" (13:354) sits on a 5% gold band ("bkg", 13:357). Two slips in
+ * that node are not carried over: the band is offset 58px right of the canvas
+ * and overflows it, and the footer block is centred on x=804 rather than the
+ * canvas centre of 864. Both are squared up here. */
+.footer-band {
+  height: 203px; /* 1298 -> 1501 */
+  padding-top: 73px; /* footer text starts 1371 */
+  background-color: var(--color-panel-fill);
+}
+
+/* This screen's footer is Sub (#2f2712), a step dimmer than the landing page's. */
+.site-footer--sub {
+  margin-top: 0;
+  color: var(--color-sub);
+}
+
+.site-footer--sub a:hover {
+  color: var(--color-gold-dim);
+}
+
+/* =========================================================================
+ * 7. app extensions — not in the Figma file
+ *
+ * Everything above this line is the pixel-verified port of the static
+ * prototypes (see _staticfiles/README.md). Everything below exists only in
+ * the app: flash messages and the secure-transmission modal, carried over
+ * from the V1 stylesheet so their behaviour-bearing JS keeps working.
+ *
+ * Both blocks kept their V1 design tokens, restated locally on their own
+ * roots — the modal is a floating overlay on top of the page, not part of
+ * the Figma canvas, so it keeps the look it already had rather than getting
+ * an invented v2 restyle. Nothing here leaks into the v2 rules above.
+ * ========================================================================= */
+
+.flash-messages,
+.transmission-modal {
+  --v1-bg: #121416;
+  --v1-bg-panel: #1e2228;
+  --v1-border: #2e343c;
+  --v1-border-subtle: #252a31;
+  --v1-text: #e8eaed;
+  --v1-text-muted: #9aa3ad;
+  --v1-text-faint: #6b7580;
+  --v1-accent: #c4a35a;
+  --v1-accent-dim: #8a7340;
+  --v1-danger: #c45c5c;
+  --v1-font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --v1-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --v1-radius-sm: 4px;
+  --v1-radius-md: 8px;
+  --v1-shadow-panel: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+/* ------------------------------------------------------- flash messages */
+
+.flash-messages {
+  max-width: 28rem;
+  margin: 1rem auto 0;
+  padding: 0 1rem;
+  font-family: var(--v1-font-sans);
+}
+
+.flash-message {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: var(--v1-radius-sm);
+}
+
+.flash-message--error {
+  color: var(--v1-danger);
+  background: rgba(196, 92, 92, 0.1);
+  border: 1px solid rgba(196, 92, 92, 0.35);
+}
+
+.flash-message--info {
+  color: var(--v1-text-muted);
+  background: var(--v1-bg-panel);
+  border: 1px solid var(--v1-border-subtle);
+}
+
+/* The landing hero sits flush against the top of the canvas; when a flash is
+ * present it floats above the hero instead of pushing the artwork down. */
+.page-landing .flash-messages {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
+
+/* -------------------------------------------- secure transmission modal */
+
+/* Restyled to the v2 language: near-black dialog, gold display-face headings,
+ * 2px radii, the gold rule. Carried over from V1 as behaviour (its progress
+ * animation and outcome panel), but wearing the Figma theme. */
+body.has-transmission-modal {
+  overflow: hidden;
+}
+
+.text-mono {
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+}
+
+.transmission-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  font-family: var(--font-display, "slight-chance", "Rajdhani", system-ui, sans-serif);
+}
+
+.transmission-modal[hidden] {
+  display: none;
+}
+
+.transmission-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.transmission-modal__dialog {
+  position: relative;
+  width: min(430px, 100%);
+  padding: 30px 32px 32px;
+  background-color: #0d0c0a;
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+.transmission-modal__title {
+  margin: 0 0 18px;
+  font-size: var(--size-micro);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold-dim);
+}
+
+.transmission-modal__title--phase {
+  color: var(--color-gold);
+}
+
+.transmission-modal__outcome .transmission-modal__title {
+  font-size: var(--size-body);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--color-gold);
+}
+
+.transmission-modal__step {
+  min-height: 1.5rem;
+  margin: 0 0 18px;
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+  font-size: var(--size-small);
+  color: var(--color-gold-light);
+}
+
+.transmission-modal__bar {
+  height: 6px;
+  overflow: hidden;
+  background: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+}
+
+.transmission-modal__bar-fill {
+  width: 0;
+  height: 100%;
+  background: var(--color-gold);
+  transition: width 0.2s ease;
+}
+
+.transmission-modal__outcome[hidden] {
+  display: none;
+}
+
+.transmission-modal__message {
+  margin: 0 0 18px;
+  font-size: var(--size-body);
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.transmission-modal__outcome-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.transmission-modal__outcome-mark {
+  display: block;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  margin: 0;
+}
+
+.transmission-modal__outcome-heading {
+  margin: 0;
+  font-size: var(--size-h1);
+  font-weight: 400;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.transmission-modal__outcome-heading-line {
+  display: block;
+}
+
+/* The mark carries state by dimming, as before, now on the colour emblem. */
+.transmission-modal__outcome-mark--success {
+  opacity: 1;
+}
+
+.transmission-modal__outcome-mark--already-done {
+  opacity: 0.75;
+}
+
+.transmission-modal__outcome-mark--failure {
+  opacity: 0.5;
+}
+
+.outcome-missions-groups {
+  margin: 0 0 20px;
+}
+
+.outcome-missions-group + .outcome-missions-group {
+  margin-top: 16px;
+}
+
+.outcome-missions-group__heading {
+  margin: 0 0 8px;
+  font-size: var(--size-micro);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-gold-dim);
+}
+
+.outcome-missions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.outcome-missions[hidden] {
+  display: none;
+}
+
+.outcome-missions__item {
+  padding: 8px 12px;
+  font-size: var(--size-reg);
+  color: var(--color-text);
+  background: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+}
+
+.outcome-missions__item + .outcome-missions__item {
+  margin-top: 6px;
+}
+
+.outcome-missions__slug {
+  font-size: var(--size-small);
+  color: var(--color-gold-dim);
+}
+
+.transmission-modal__ok {
+  display: block;
+  width: 100%;
+  padding: 11px 20px;
+  font-family: var(--font-display, "slight-chance", "Rajdhani", system-ui, sans-serif);
+  font-size: var(--size-reg);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #000000;
+  background: var(--color-gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.transmission-modal__ok:hover {
+  background: var(--color-gold-light);
+}
+
+.transmission-modal__ok:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.transmission-modal__ok:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------- dashboard, app markup */
+
+/* The app's dashboard reuses the prototype's chrome (.topbar, .rail, .panel,
+ * .missions, .mgroup) via shared classes, but its mission rows are the app's
+ * own vocabulary — .mission-group, .mission-list__item, .mission-card — which
+ * dashboard.js and the acceptance tests key off. These rules restate the Figma
+ * table's geometry on that markup, with the deviations _staticfiles/README.md
+ * records: the ID column is 210px and carries the mission slug, and the Intel /
+ * Locked columns have no data behind them and are dropped. */
+
+/* Welcome panel takes the full content width — Figma pairs it with a Messages
+ * panel that has no schema behind it. */
+.welcome--full {
+  --fade-w: 1448px;
+  --fade-x: -38px;
+  width: 1379px;
+  margin-top: 39.2px; /* .panelrow's offset: subtitle ends 238.8, panel at 278 */
+  margin-left: 3px;
+}
+
+/* Welcome memo: arbitrary-length Markdown, so the one panel with no fixed
+ * Figma box. The V1 tokens its markdown override stack consumes are restated
+ * locally, like the transmission modal's. */
+.dashboard__welcome {
+  --space-lg: 1.5rem;
+  --space-md: 1rem;
+  --color-accent: #c4a35a;
+  --color-border: #2e343c;
+  --fade-w: 1448px;
+  --fade-x: -38px;
+  width: 1379px;
+  margin-top: 24px;
+  margin-left: 3px;
+  padding: 24px 34px;
+}
+
+/* Missions panel spacing against the flow above (welcome or memo panel) —
+ * Figma's 45px card-to-panel gap. */
+.page-v2 .missions {
+  margin-top: 45px;
+}
+
+/* Trailing whitespace on the Figma artboard is 398px with no footer; the app
+ * appends the footer band instead. */
+.page-v2 .content {
+  padding-bottom: 120px;
+}
+
+/* Topbar: codename links to the Personnel File. */
+.topbar__agent-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.topbar__agent-link:hover,
+.topbar__agent-link[aria-current="page"] {
+  color: var(--color-gold);
+}
+
+/* The sign-out control is a POST form's button, not the prototype's anchor. */
+button.topbar__logout {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Group summary: the shared chevron fragment (_mission_chevron.html) instead
+ * of the prototype's caret, same size and centring. */
+.mission-group__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-left: 11px;
+  color: var(--color-text);
+}
+
+.mission-group__chevron-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.mission-group__chevron-path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mission-group__chevron-path--open {
+  display: none;
+}
+
+.mission-group--collapsible[open] > .mission-group__summary .mission-group__chevron-path--closed {
+  display: none;
+}
+
+.mission-group--collapsible[open] > .mission-group__summary .mission-group__chevron-path--open {
+  display: inline;
+}
+
+.mission-group__title {
+  margin: 0 0 0 8px;
+  color: var(--color-text);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+/* In flow rather than pinned at Figma's x=427: real group names ("Testing
+ * Storyline") outgrow the 219px slot the fixture titles fit in. dashboard.js
+ * rewrites this text as the show-completed toggle changes. */
+.mission-group__counts {
+  margin-left: 24px;
+  color: var(--color-gold-light);
+  font-size: var(--size-small);
+  line-height: 1.2;
+}
+
+/* ------------------------------------------------- mission rows (table) */
+
+/* One wrapper carries the Figma column rules — painted once, not per row, so
+ * the 2/2 dash phase holds across the header and every row (see .mtable).
+ * Rules at x=0 (gold, leading) and x=782 (status boundary): 210px ID + 572px
+ * title. Figma's x=434 rule separated Title from Intel and goes with it. */
+.mission-table {
+  width: 1103px;
+  margin: 11px 0 0 43px;
+  background-image:
+    repeating-linear-gradient(to bottom, var(--color-gold) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(to bottom, var(--color-sub) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(to bottom, var(--color-sub) 0 2px, transparent 2px 4px);
+  background-size: 1px 100%;
+  background-position: 0 0, 656px 0, 956px 0;
+  background-repeat: no-repeat;
+}
+
+.mission-list__colhead {
+  display: grid;
+  grid-template-columns: 210px 446px 300px 121px 26px;
+  height: 38px;
+  color: var(--color-sub);
+  font-size: var(--size-small);
+  line-height: 1.2;
+}
+
+.mission-list__col--id     { padding-left: 13px; }
+.mission-list__col--intel  { padding-left: 10px; }
+.mission-list__col--status { padding-left: 12px; }
+
+.mission-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Row marker: an 8px gold square straddling the leading rule. */
+.mission-list__item {
+  position: relative;
+}
+
+.mission-list__item::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-gold);
+}
+
+/* dashboard.js hides completed rows via [hidden]. */
+.mission-list__item[hidden] {
+  display: none;
+}
+
+.mission-card {
+  display: grid;
+  grid-template-columns: 210px 446px 300px 121px 26px;
+  align-items: start;
+  min-height: 24px;
+  padding-bottom: 16px; /* 40px row pitch: 24px content + 16px */
+  color: inherit;
+  text-decoration: none;
+}
+
+.mission-card__slug {
+  padding-left: 13px;
+  color: var(--color-gold-dim);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--size-reg);
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.mission-card__title {
+  color: var(--color-text);
+  font-size: var(--size-body);
+  line-height: 24px;
+}
+
+.mission-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mission-card__link:hover .mission-card__title,
+.mission-card__link:focus-visible .mission-card__title {
+  color: var(--color-gold);
+}
+
+/* Intel cell: the Figma links (12px + enter glyph), as buttons that open the
+ * intel modal. Empty on active rows. */
+.mission-card__intel {
+  padding-left: 10px;
+}
+
+button.intel__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--size-micro);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+button.intel__link:hover,
+button.intel__link:focus-visible {
+  color: var(--color-gold);
+}
+
+/* Status cell: 10px swatch + 12px caps label (.mstate on the prototype). */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 24px;
+  padding-left: 12px;
+  color: var(--color-text);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.status-badge::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background-color: var(--color-gold);
+}
+
+.status-badge--completed::before {
+  background-color: var(--color-success);
+}
+
+/* Enter affordance at the row's right edge: gold on active rows, white on
+ * completed (.mgo on the prototype). */
+.mission-card__arrow {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  color: var(--color-gold);
+}
+
+.mission-card--completed .mission-card__arrow {
+  color: var(--color-text);
+}
+
+.mission-card__arrow svg {
+  width: 14px;
+  height: 13px;
+}
+
+/* --------------------------------------------- dashboard, narrow viewports */
+
+/* The Figma dashboard is desktop-only (a fixed 1728px canvas); these rules
+ * extend the design language below that width rather than reproducing any
+ * artboard. At full width nothing here applies and the pixel-verified layout
+ * stands. Two tiers: fluid below the canvas width, stacked below 760px. */
+
+@media (max-width: 1727px) {
+  .page-v2 {
+    overflow-x: hidden;
+  }
+
+  .page-v2 .canvas {
+    width: 100%;
+  }
+
+  /* Top bar: the Figma bar pins every item to a measured x on a 1728px run;
+   * on anything narrower it reflows as a wrapping flex row. The hairline
+   * separators only make sense between pinned groups, so they go. */
+  .page-v2 .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 28px;
+    height: auto;
+    padding: 14px 20px;
+  }
+
+  .page-v2 .topbar__logo,
+  .page-v2 .topbar__group,
+  .page-v2 .topbar__profile {
+    position: static;
+  }
+
+  /* The hairline separators ride along as flex items between the groups
+   * instead of sitting at their pinned Figma x positions. */
+  .page-v2 .topbar__sep {
+    position: static;
+    align-self: center;
+    height: 48px;
+  }
+
+  .page-v2 .topbar__logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .page-v2 .topbar__logo img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .page-v2 .topbar__profile {
+    margin-left: auto;
+  }
+
+  /* The rail stays — it will grow into the section nav — with its hairline
+   * stretched to the page instead of Figma's fixed 970px. */
+  .page-v2 .rail::before {
+    height: auto;
+    bottom: 0;
+  }
+
+  .page-v2 .content {
+    padding: 40px 24px 80px;
+  }
+
+  .welcome--full,
+  .page-v2 .dashboard__welcome,
+  .page-v2 .missions {
+    width: auto;
+    margin-left: 0;
+  }
+
+  .page-v2 .welcome__body {
+    max-width: none;
+  }
+
+  /* Mission table: keep the four columns but let ID and Title share the
+   * remaining width. The x=782 column rule is pinned to the fixed column
+   * pitch, so only the leading gold rule survives; the header row tracks the
+   * same fluid template. */
+  .mission-table {
+    width: auto;
+    margin-left: 12px;
+    background-position: 0 0, -9999px 0;
+  }
+
+  .mission-list__colhead,
+  .mission-card {
+    grid-template-columns: minmax(140px, 210px) 1fr minmax(230px, 300px) 121px 26px;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-v2 .topbar {
+    gap: 12px 20px;
+  }
+
+  /* On a phone the wrapping rows leave the separators stranded, and the rail
+   * would eat a quarter of the width — both go until the rail grows into a
+   * real nav with a phone treatment. */
+  .page-v2 .topbar__sep {
+    display: none;
+  }
+
+  .page-v2 .shell {
+    display: block;
+  }
+
+  .page-v2 .rail {
+    display: none;
+  }
+
+  /* Row 1: logo, agent, profile. Row 2: the three readouts, compacted — the
+   * Network/Uplink/Date labels go, the values self-describe. Row 3: clearance. */
+  .page-v2 .topbar__profile {
+    margin-left: auto;
+  }
+
+  .page-v2 .topbar__group--network,
+  .page-v2 .topbar__group--uplink,
+  .page-v2 .topbar__group--time {
+    order: 5;
+  }
+
+  .page-v2 .topbar__group--network .topbar__label,
+  .page-v2 .topbar__group--uplink .topbar__label,
+  .page-v2 .topbar__group--time .topbar__label {
+    display: none;
+  }
+
+  .page-v2 .statusbox {
+    width: auto;
+    margin-top: 0;
+  }
+
+  .page-v2 .topbar__group--time {
+    display: flex;
+    align-items: center;
+  }
+
+  .page-v2 .topbar__time {
+    margin-top: 0;
+  }
+
+  /* Clearance form takes its own full-width row; the input flexes. */
+  .page-v2 .topbar__group--clear {
+    order: 10;
+    flex: 1 1 100%;
+  }
+
+  .page-v2 .clearance {
+    width: 100%;
+  }
+
+  .page-v2 .clearance__input {
+    flex: 1 1 auto;
+    width: auto;
+    height: 40px;
+  }
+
+  .page-v2 .clearance__submit {
+    height: 40px;
+    flex: none;
+  }
+
+  .page-v2 .content {
+    padding: 28px 16px 64px;
+  }
+
+  .page-v2 .pagehead__title {
+    font-size: 36px;
+    line-height: 1.1;
+  }
+
+  .page-v2 .welcome__title {
+    line-height: 1.2;
+  }
+
+  .welcome--full {
+    height: auto;
+    padding: 24px 20px;
+    margin-top: 28px;
+  }
+
+  .page-v2 .dashboard__welcome {
+    padding: 16px;
+  }
+
+  .page-v2 .missions {
+    padding: 24px 16px;
+  }
+
+  /* Missions head: the toggle is pinned at Figma's x=519 on desktop; here it
+   * flows under the heading. */
+  .page-v2 .missions__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 24px;
+  }
+
+  .page-v2 .missions__title {
+    font-size: 32px;
+    line-height: 1.2;
+  }
+
+  .page-v2 .showcomp {
+    position: static;
+  }
+
+  /* Group summary wraps so long names and live counts share the row politely. */
+  .page-v2 .mgroup__head {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  /* Rows stack: title, slug, status in a column with the enter affordance
+   * pinned right — the row marker and leading gold rule keep the table's
+   * identity. Touch target: the whole row is the link, well over 44px tall. */
+  .mission-table {
+    margin-left: 6px;
+  }
+
+  .mission-list__colhead {
+    display: none;
+  }
+
+  .mission-card {
+    grid-template-columns: 1fr 26px;
+    grid-template-areas:
+      "title arrow"
+      "slug  arrow"
+      "badge arrow"
+      "intel arrow";
+    align-items: center;
+    padding: 10px 0 14px;
+  }
+
+  .mission-card__link {
+    display: contents;
+  }
+
+  .mission-card__title {
+    grid-area: title;
+    padding-left: 16px;
+  }
+
+  .mission-card__intel {
+    grid-area: intel;
+    margin-top: 6px;
+    padding-left: 16px;
+    gap: 24px;
+  }
+
+  .mission-card__intel:empty {
+    display: none;
+  }
+
+  .mission-card__slug {
+    grid-area: slug;
+    padding-left: 16px;
+  }
+
+  .status-badge {
+    grid-area: badge;
+    height: auto;
+    margin-top: 4px;
+    padding-left: 16px;
+  }
+
+  .mission-card__arrow {
+    grid-area: arrow;
+    height: auto;
+  }
+
+  .mission-list__item::before {
+    top: 18px;
+  }
+
+  /* Footer band breathes a little less on a phone. */
+  .page-v2 .footer-band {
+    height: auto;
+    padding: 48px 24px 56px;
+  }
+}
+
+/* -------------------------------------------------- topbar status pulse */
+
+/* The Network / Uplink dots blink like an activity LED — a quick double
+ * flicker, then hold. The two run at different periods and phases so they
+ * never sync, which is what reads as live traffic rather than an animation. */
+@keyframes statusbox-comms {
+  0%   { opacity: 1; }
+  6%   { opacity: 0.25; }
+  12%  { opacity: 1; }
+  20%  { opacity: 0.4; }
+  28%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.statusbox__dot {
+  animation: statusbox-comms 2.6s linear infinite;
+}
+
+.statusbox__dot--uplink {
+  animation-duration: 1.9s;
+  animation-delay: 0.7s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusbox__dot {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------- mission page, app markup */
+
+/* V1 token bridge at page scope: the markdown overrides' behaviour-bearing
+ * pieces (brief-section collapses, the code-copy button) and preview.css
+ * consume these names outside the .markdown-v2 root. --color-text is shared
+ * by both vocabularies and already right.
+ *
+ * NB: --color-bg is deliberately NOT overridden here — the v2 artboard is the
+ * Figma #000 (from :root), and the only consumer is `body`. Overriding it lit
+ * the whole signed-in canvas to the V1 slate #121416 instead of black. */
+.page-v2,
+.page--preview {
+  --color-accent: #c4a35a;
+  --color-accent-dim: #8a7340;
+  --color-border: #2e343c;
+  --color-border-subtle: #252a31;
+  --color-text-faint: #6b7580;
+  --color-text-muted: #9aa3ad;
+  --color-bg-panel: #1e2228;
+  --radius-sm: 2px;
+  --radius-md: 8px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Header: title at the dashboard pagehead's slot, breadcrumb under it with
+ * the slug and status badge on the same row. */
+.brief__head .crumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+
+.mission-detail__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.2;
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+}
+
+.mission-detail__meta .status-badge {
+  height: auto;
+  padding-left: 0;
+}
+
+/* Two columns on the Figma geometry — main 862 (859 + the 3px panel offset),
+ * a 184px gap carrying the hairline divider 47px left of the aside, aside
+ * 337 — but sized by content, not pinned: briefs are arbitrary Markdown. */
+.brief-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 862px) 337px;
+  column-gap: 184px;
+  justify-content: start;
+  margin-top: 50px; /* crumb ends 239 -> columns at 289 */
+}
+
+.brief-columns .recover {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: auto;
+}
+
+.brief-columns .recover::before {
+  content: "";
+  position: absolute;
+  left: -47px; /* divider at x=1170 against an aside at 1217 */
+  top: 2px;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-panel-stroke);
+}
+
+/* The v2 canvas draws no chrome around the prose column — these panels keep
+ * their (test- and JS-bearing) class names but not the V1 card look. */
+.mission-content-panel {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.mission-detail__section + .mission-detail__section {
+  margin-top: 33px;
+}
+
+/* Collapse summaries: chevron + gold caps heading, native marker suppressed. */
+.mission-panel__collapse > .mission-panel__summary {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  cursor: pointer;
+}
+
+.mission-panel__collapse > .mission-panel__summary::-webkit-details-marker {
+  display: none;
+}
+
+.mission-panel__collapse > .mission-panel__summary::marker {
+  content: "";
+}
+
+.mission-panel__summary .mission-group__chevron {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.mission-panel__collapse[open] > .mission-panel__summary .mission-group__chevron-path--open {
+  display: inline;
+}
+
+.mission-panel__collapse[open] > .mission-panel__summary .mission-group__chevron-path--closed {
+  display: none;
+}
+
+.mission-panel__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 25px;
+  text-transform: uppercase;
+}
+
+.mission-panel__collapse > .mission-panel__summary + * {
+  margin-top: 18px;
+}
+
+/* The aside's heading keeps Figma's 40px (13:345) in both states. */
+.recover .mission-panel__title {
+  font-size: var(--size-h1);
+}
+
+.recover__lede {
+  margin-top: 24px;
+}
+
+/* Archived data: the plaintext frame's treatment, monospace because the value
+ * is data the agent had to reproduce character for character. */
+.recovered-data__block {
+  margin-top: 16px;
+}
+
+.recovered-data__value {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  background-color: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  color: var(--color-gold);
+  font-family: var(--font-mono);
+  font-size: var(--size-small);
+  line-height: 1.5;
+}
+
+.recover__input.recovered-data-form__textarea {
+  font-family: var(--font-mono);
+  font-size: var(--size-small);
+}
+
+/* ------------------------------------------- mission page, narrow widths */
+
+@media (max-width: 1727px) {
+  .brief-columns {
+    grid-template-columns: minmax(0, 1fr) 337px;
+    column-gap: 96px;
+  }
+
+  .brief-columns .recover::before {
+    left: -48px;
+  }
+}
+
+@media (max-width: 900px) {
+  .brief-columns {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 44px;
+  }
+
+  .brief-columns .recover::before {
+    display: none;
+  }
+
+  .page-v2 .brief__title {
+    font-size: 36px;
+    line-height: 1.1;
+  }
+
+  .recover__input {
+    width: 100%;
+    height: 300px;
+  }
+}
+
+/* ------------------------------------------------------------ intel modal */
+
+/* Recovered Data / Mission Debrief popups from the dashboard's Intel column.
+ * Same overlay pattern as the transmission modal, in the v2 voice. */
+body.has-intel-modal {
+  overflow: hidden;
+}
+
+.intel-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.intel-modal[hidden] {
+  display: none;
+}
+
+.intel-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.intel-modal__dialog {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 32px 30px;
+  background-color: #0d0c0a;
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+.intel-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.intel-modal__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.intel-modal__close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 7px;
+  border: 0;
+  background: none;
+  color: var(--color-gold);
+  cursor: pointer;
+}
+
+.intel-modal__close:hover {
+  color: var(--color-text);
+}
+
+.intel-modal__close svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.intel-modal__body {
+  margin-top: 20px;
+  overflow-y: auto;
+}
+
+/* --------------------------------------------------------- copy affordance */
+
+/* mission-detail-copy-data.js wraps code blocks and recovered-data values in
+ * .code-block and drops a .copy-btn in the corner; these are its v2 clothes
+ * (the V1 ones live in the retired stylesheet). On success the button grows a
+ * COPIED tag beside it — the indication, not just a colour shift. */
+.code-block {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--color-gold-dim);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.copy-btn:hover,
+.copy-btn:focus-visible {
+  color: var(--color-gold);
+  border-color: var(--color-gold-dim);
+}
+
+.copy-btn--copied {
+  color: var(--color-gold);
+  border-color: var(--color-success);
+}
+
+.copy-btn--copied::after {
+  content: "Copied";
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--size-micro);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.copy-btn__icon {
+  display: block;
+}
+
+/* ---------------------------------------------------- mission data page */
+
+/* Recovered data + debrief pop-outs for every completed mission. Reuses the
+ * intel modal for debriefs and the copy affordance for recovered values. */
+.mission-data .pagehead {
+  margin-bottom: 44px;
+}
+
+/* Arc groups, mirroring the dashboard's hierarchy: a gold arc heading over the
+ * accordion rows for the missions completed in that arc. */
+.datagroups {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 1103px;
+}
+
+.datagroup__head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.datagroup__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h1);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.datagroup__count {
+  color: var(--color-gold-light);
+  font-size: var(--size-small);
+}
+
+.datacards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Each completed mission is one accordion row — compact when collapsed so a
+ * long archive stays scannable. */
+.datacard {
+  --fade-w: 1150px;
+  --fade-x: -34px;
+}
+
+.datacard__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 26px;
+}
+
+.datacard__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+/* Slug + arc, pushed to the row's right edge. */
+.datacard__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+}
+
+.datacard__group {
+  color: var(--color-gold-light);
+}
+
+.datacard__body {
+  padding: 0 26px 24px;
+}
+
+.datacard__body-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.datacard__label {
+  margin: 0;
+  color: var(--color-gold-dim);
+  font-size: var(--size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.datacard__body .recovered-data__block {
+  margin-top: 10px;
+}
+
+/* The debrief pop-out button: the intel link treatment, sized up a touch for a
+ * standalone control. */
+.datacard__debrief {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--size-small);
+  line-height: 1;
+  background: none;
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.datacard__debrief:hover,
+.datacard__debrief:focus-visible {
+  color: var(--color-gold);
+  border-color: var(--color-gold-dim);
+}
+
+.datacard--empty {
+  padding: 40px 34px;
+}
+
+.datacard__empty-text {
+  margin: 0;
+  max-width: 520px;
+  color: var(--color-gold-light);
+  font-size: var(--size-body);
+  line-height: 1.3;
+}
+
+@media (max-width: 760px) {
+  .datacard__summary {
+    flex-wrap: wrap;
+    padding: 16px 18px;
+  }
+
+  .datacard__meta {
+    flex-basis: 100%;
+    margin-left: 34px; /* clear the chevron gutter */
+  }
+
+  .datacard__body {
+    padding: 0 18px 20px;
+  }
+
+  .datacard__body-head {
+    gap: 14px;
+  }
+}
+
+/* =========================================================================
+ * 8. public + utility pages — brought into the v2 language by extension.
+ * No Figma reference; they reuse the vocabulary (gold panels, 2px radii,
+ * gold caps over white body, the display face).
+ * ========================================================================= */
+
+/* ---------------------------------------------------------- public shell */
+
+.pubshell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.pubshell__main {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 64px 32px 80px;
+}
+
+/* Public header: brand lockup left, Sign in right, over the 5% gold wash. */
+.pubhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 72px;
+  padding: 0 32px;
+  background-color: var(--color-panel-fill);
+  border-bottom: 1px solid var(--color-panel-stroke);
+}
+
+.pubhead__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.pubhead__mark {
+  width: 40px;
+  height: 40px;
+}
+
+.pubhead__title {
+  font-size: var(--size-h2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.pubhead__signin {
+  color: var(--color-gold);
+  font-size: var(--size-small);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.pubhead__signin:hover {
+  color: var(--color-gold-light);
+}
+
+/* --------------------------------------------------------- content pages */
+
+/* About / Privacy — long-form prose in the v2 voice. */
+.content-page {
+  max-width: 680px;
+}
+
+.content-page__title {
+  margin: 0 0 24px;
+  color: var(--color-gold);
+  font-size: var(--size-main);
+  font-weight: 400;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.content-page h2 {
+  margin: 36px 0 10px;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.content-page p {
+  margin: 0 0 16px;
+  font-size: var(--size-body);
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.content-page strong {
+  color: var(--color-gold);
+}
+
+.content-page em {
+  color: var(--color-gold-light);
+  font-style: normal;
+}
+
+.content-page a {
+  color: var(--color-gold);
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-underline-position: from-font;
+}
+
+.content-page a:hover {
+  color: var(--color-text);
+}
+
+/* --------------------------------------------------------- 404 / preview */
+
+.not-found {
+  max-width: 560px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.not-found__mark {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 20px;
+}
+
+.not-found__code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 64px;
+  line-height: 1;
+  color: var(--color-gold-dim);
+}
+
+.not-found__designation {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold-dim);
+}
+
+.not-found__title {
+  margin: 22px 0 0;
+  color: var(--color-gold);
+  font-size: var(--size-h1);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.not-found__briefing {
+  margin: 16px auto 0;
+  max-width: 460px;
+  font-size: var(--size-reg);
+  line-height: 1.45;
+  color: var(--color-text);
+}
+
+.not-found__status {
+  margin: 28px auto 0;
+  max-width: 420px;
+  padding: 8px 16px;
+  text-align: left;
+  background-color: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+}
+
+.not-found__status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 8px 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-gold-dim);
+}
+
+.not-found__status-row + .not-found__status-row {
+  border-top: 1px solid var(--color-panel-stroke);
+}
+
+.not-found__status-value {
+  color: var(--color-text);
+}
+
+.not-found__status-value--alert {
+  color: var(--color-gold);
+}
+
+.not-found__actions {
+  margin: 28px 0 0;
+}
+
+.not-found__link {
+  display: inline-block;
+  padding: 10px 22px;
+  color: #000000;
+  font-size: var(--size-small);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background-color: var(--color-gold);
+  border-radius: var(--radius-sm);
+}
+
+.not-found__link:hover {
+  background-color: var(--color-gold-light);
+}
+
+/* ------------------------------------------------------ clearance landing */
+
+.auth__hint {
+  margin: 0 0 18px;
+  max-width: 460px;
+  font-size: var(--size-small);
+  line-height: 1.4;
+  color: var(--color-gold-light);
+}
+
+/* Confirm mode: a content-sized panel (not the landing's fixed 136px fade
+ * box), everything centred in a tidy stack. */
+.auth--confirm {
+  height: auto;
+  padding: 34px 40px 38px;
+  text-align: center;
+}
+
+.auth--confirm .auth__heading {
+  margin-bottom: 26px;
+}
+
+.clearance-confirm {
+  display: flex;
+  justify-content: center;
+}
+
+.clearance-confirm__submit {
+  min-width: 280px;
+  padding: 14px 28px;
+  color: #000000;
+  font-family: inherit;
+  font-size: var(--size-reg);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: var(--color-gold);
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.clearance-confirm__submit:hover {
+  background-color: var(--color-gold-light);
+}
+
+.clearance-confirm__alt {
+  margin: 20px 0 0;
+  font-size: var(--size-small);
+}
+
+.clearance-confirm__alt a {
+  color: var(--color-gold-dim);
+  text-decoration: underline;
+  text-underline-position: from-font;
+}
+
+.clearance-confirm__alt a:hover {
+  color: var(--color-gold);
+}
+
+/* ------------------------------------------------------- personnel file */
+
+.personnel-file {
+  position: relative;
+}
+
+.personnel-section {
+  max-width: 760px;
+  margin-top: 20px;
+  padding: 26px 30px;
+}
+
+.personnel-section:first-of-type {
+  margin-top: 8px;
+}
+
+.personnel-section__heading {
+  margin: 0 0 18px;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.personnel-form {
+  margin: 0;
+}
+
+.personnel-field {
+  margin-bottom: 18px;
+}
+
+.personnel-field__label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-gold-dim);
+  font-size: var(--size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.personnel-field__value {
+  display: block;
+  color: var(--color-text);
+  font-size: var(--size-body);
+  line-height: 1.3;
+}
+
+.personnel-form__codename-row {
+  display: flex;
+  gap: 0;
+  max-width: 420px;
+}
+
+.personnel-form__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  background-color: var(--color-panel-fill);
+  border: 1px solid var(--color-panel-stroke);
+  border-right: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--size-reg);
+}
+
+.personnel-form__submit {
+  flex: none;
+  height: 40px;
+  padding: 0 20px;
+  color: #000000;
+  font-family: inherit;
+  font-size: var(--size-small);
+  text-transform: uppercase;
+  background-color: var(--color-gold);
+  border: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  cursor: pointer;
+}
+
+.personnel-form__submit:hover {
+  background-color: var(--color-gold-light);
+}
+
+.personnel-form__hint,
+.personnel-form__scope {
+  margin: 8px 0 0;
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+  line-height: 1.4;
+}
+
+.personnel-form__scope {
+  margin-top: 4px;
+}
+
+/* Field status: two stat tiles. */
+.personnel-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin: 0;
+}
+
+.personnel-stats__item {
+  margin: 0;
+}
+
+.personnel-stats__label {
+  margin: 0 0 6px;
+  color: var(--color-gold-dim);
+  font-size: var(--size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.personnel-stats__value {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-main);
+  line-height: 1;
+}
+
+/* Service record: dated log rows. */
+.service-record {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.service-record__item {
+  display: grid;
+  grid-template-columns: 120px 150px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  font-size: var(--size-reg);
+  line-height: 1.3;
+}
+
+.service-record__item + .service-record__item {
+  border-top: 1px solid var(--color-panel-stroke);
+}
+
+.service-record__date {
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+}
+
+.service-record__verb {
+  color: var(--color-gold);
+  text-transform: uppercase;
+  font-size: var(--size-small);
+}
+
+.service-record__detail {
+  color: var(--color-text);
+}
+
+/* Codename update modal — v2 dialog, same treatment as the intel modal. Its
+ * outcome content reuses the transmission-modal__* classes (already v2). */
+body.has-codename-modal {
+  overflow: hidden;
+}
+
+.codename-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  font-family: var(--font-display);
+}
+
+.codename-modal[hidden] {
+  display: none;
+}
+
+.codename-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.codename-modal__dialog {
+  position: relative;
+  width: min(430px, 100%);
+  padding: 30px 32px 32px;
+  background-color: #0d0c0a;
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 900px) {
+  .service-record__item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* ---------------------------------------------------------- field activity */
+
+/* Logged-in agent bar variant of the public header. */
+.pubhead__agent {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.pubhead__agent-name {
+  color: var(--color-gold);
+  font-size: var(--size-small);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.pubhead__agent-name:hover {
+  color: var(--color-gold-light);
+}
+
+.pubhead__signout {
+  padding: 0;
+  color: var(--color-gold-dim);
+  font-family: inherit;
+  font-size: var(--size-small);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.pubhead__signout:hover {
+  color: var(--color-gold);
+}
+
+/* Back-to-dashboard nav (signed-in). */
+.crumb-nav {
+  margin: 0 0 24px;
+}
+
+.crumb-nav--bottom {
+  margin: 40px 0 0;
+}
+
+.crumb-nav__link {
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+  text-decoration: none;
+}
+
+.crumb-nav__link:hover {
+  color: var(--color-gold);
+}
+
+.activity {
+  max-width: 1100px;
+}
+
+.activity__intro {
+  margin-bottom: 32px;
+}
+
+.activity__heading {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-main);
+  font-weight: 400;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.activity__lede {
+  margin: 8px 0 0;
+  color: var(--color-gold-light);
+  font-size: var(--size-reg);
+  line-height: 1.4;
+}
+
+.activity__columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px;
+}
+
+.activity-section--spaced {
+  margin-top: 32px;
+}
+
+.activity-section__heading {
+  margin: 0 0 14px;
+  color: var(--color-gold);
+  font-size: var(--size-h2);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.activity-leaderboard,
+.activity-storyline-list {
+  margin: 0;
+  padding: 20px 24px;
+  list-style: none;
+}
+
+.activity-leaderboard__item {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.activity-leaderboard__item + .activity-leaderboard__item {
+  border-top: 1px solid var(--color-panel-stroke);
+}
+
+.activity-leaderboard__rank {
+  flex: none;
+  width: 24px;
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-small);
+}
+
+.activity-leaderboard__agent {
+  flex: 1 1 auto;
+  color: var(--color-text);
+  font-size: var(--size-body);
+}
+
+.activity-leaderboard__score {
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+}
+
+.activity-storyline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.activity-storyline + .activity-storyline {
+  border-top: 1px solid var(--color-panel-stroke);
+}
+
+.activity-storyline__name {
+  color: var(--color-gold);
+  font-size: var(--size-body);
+  text-transform: uppercase;
+}
+
+.activity-storyline__meta {
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+}
+
+.activity-feed-panel {
+  padding: 12px 24px;
+}
+
+.activity-feed {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-feed__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  font-size: var(--size-reg);
+}
+
+.activity-feed__item + .activity-feed__item {
+  border-top: 1px solid var(--color-panel-stroke);
+}
+
+.activity-feed__agent {
+  color: var(--color-text);
+}
+
+.activity-feed__storyline {
+  color: var(--color-gold);
+}
+
+.activity-feed__time {
+  flex: none;
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+}
+
+.activity-panel__empty {
+  margin: 0;
+  padding: 8px 0;
+  color: var(--color-gold-dim);
+  font-size: var(--size-reg);
+}
+
+@media (max-width: 760px) {
+  .activity__columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+/* Public pages carry the same gold radial glow as the dashboard/brief so the
+ * whole v2 site shares one background warmth (they were flat black before). */
+.pubshell {
+  position: relative;
+  overflow: hidden; /* clip the glow, as on .canvas */
+}
+
+.pubshell::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 1100px;
+  background-image: radial-gradient(
+    circle 812px at 140px 160px,
+    rgba(181, 132, 44, 0.22) 0%,
+    rgba(162, 120, 43, 0.19) 12%,
+    rgba(144, 107, 41, 0.163) 25%,
+    rgba(126, 95, 40, 0.135) 38%,
+    rgba(107, 82, 38, 0.108) 50%,
+    rgba(88, 70, 37, 0.081) 62%,
+    rgba(70, 58, 36, 0.054) 75%,
+    rgba(52, 45, 34, 0.027) 88%,
+    rgba(33, 33, 33, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pubshell > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------- mobile bottom nav */
+
+/* Fixed bottom tab bar standing in for the rail on narrow viewports. Hidden on
+ * desktop; the rail covers navigation there. */
+.mobilenav {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mobilenav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    height: 62px;
+    background-color: #0d0c0a;
+    border-top: 1px solid var(--color-panel-stroke);
+  }
+
+  .mobilenav__link {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--color-gold-dim);
+    text-decoration: none;
+  }
+
+  .mobilenav__link--active {
+    color: var(--color-gold);
+  }
+
+  .mobilenav__icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mobilenav__label {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Clear the fixed bar so the footer isn't hidden behind it. */
+  .page-v2 .footer-band {
+    padding-bottom: 82px;
+  }
+
+  /* Secure / Online readouts are dropped on mobile. */
+  .page-v2 .topbar__group--network,
+  .page-v2 .topbar__group--uplink {
+    display: none;
+  }
+}

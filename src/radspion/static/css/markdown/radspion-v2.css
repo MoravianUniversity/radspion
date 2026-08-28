@@ -1,0 +1,165 @@
+/**
+ * Mission markdown, v2 theme — the fourth layer over github-markdown-dark +
+ * radspion-overrides + pygments-native (see _staticfiles/README.md).
+ *
+ * The brief's prose is rendered Markdown, not page chrome: the memo, section
+ * headings, substitution key and framed plaintext in the Figma brief are all
+ * `brief_markdown`. This layer restates that typography — the display face,
+ * gold caps headings, 20px white body — over the GitHub dark base, and bridges
+ * the V1 token names the overrides consume (the collapsible `brief-section`
+ * machinery, its chevrons and the code-copy affordance are behaviour-bearing
+ * and keep their V1 geometry).
+ *
+ * Code blocks deliberately stay monospace on the GitHub dark surface: a fenced
+ * block in a brief is data the agent has to reproduce character for character,
+ * which the display face is too decorative to carry.
+ */
+
+.markdown-v2 .markdown-body {
+  /* V1 token bridge, for the three layers underneath. */
+  --color-accent: #c4a35a;
+  --color-border: #2e343c;
+  --color-border-subtle: #252a31;
+  --radius-md: 8px;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* v2 voice over the GitHub dark base. */
+  background: transparent;
+  color: var(--color-text, #ffffff);
+  font-family: var(--font-display, "slight-chance", "Rajdhani", system-ui, sans-serif);
+  font-size: var(--size-body, 20px);
+  line-height: 1.2;
+}
+
+/* Outside a collapsed section the prose sits flush on the canvas (the V1
+ * overrides indent every .mission-detail article for the chevron gutter). */
+.markdown-v2 .mission-markdown.markdown-body {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.markdown-v2 .mission-panel__collapse .mission-markdown.markdown-body {
+  padding: var(--space-lg);
+  padding-left: calc(var(--space-lg) + var(--brief-chevron-gutter, 1.75rem));
+}
+
+.markdown-v2 .markdown-body p,
+.markdown-v2 .markdown-body ul,
+.markdown-v2 .markdown-body ol {
+  font-size: var(--size-body, 20px);
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 11px;
+}
+
+/* Section headings: 24px gold caps (Figma 13:318), like the brief's h2. The
+ * memo's FROM / RE / CLASSIFICATION labels are strong text in the markdown,
+ * which lands on the gold-label treatment below. */
+.markdown-v2 .markdown-body h1,
+.markdown-v2 .markdown-body h2,
+.markdown-v2 .markdown-body h3,
+.markdown-v2 .markdown-body h4 {
+  margin: 33px 0 11px;
+  padding: 0;
+  border-bottom: 0;
+  color: var(--color-gold, #b5842c);
+  font-size: var(--size-h2, 24px);
+  font-weight: 400;
+  line-height: 25px;
+  text-transform: uppercase;
+}
+
+.markdown-v2 .markdown-body h3,
+.markdown-v2 .markdown-body h4 {
+  font-size: var(--size-reg, 16px);
+}
+
+.markdown-v2 .markdown-body > :first-child,
+.markdown-v2 .markdown-body h1:first-child,
+.markdown-v2 .markdown-body h2:first-child {
+  margin-top: 0;
+}
+
+.markdown-v2 .markdown-body strong {
+  color: var(--color-gold, #b5842c);
+  font-weight: 400;
+}
+
+.markdown-v2 .markdown-body a {
+  color: var(--color-gold, #b5842c);
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-underline-position: from-font;
+}
+
+.markdown-v2 .markdown-body a:hover {
+  color: var(--color-text, #ffffff);
+}
+
+/* Hairline rules, as the brief's dividers. */
+.markdown-v2 .markdown-body hr {
+  height: 0;
+  margin: 24px 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--color-panel-stroke, rgba(127, 111, 63, 0.17));
+}
+
+/* Tables: the substitution-key treatment (Figma "image 3", 13:326) — hairline
+ * cells, centred letters, 16px. */
+.markdown-v2 .markdown-body table {
+  border-collapse: collapse;
+  font-size: var(--size-reg, 16px);
+  line-height: 1.2;
+}
+
+.markdown-v2 .markdown-body table th,
+.markdown-v2 .markdown-body table td {
+  height: 28px;
+  padding: 2px 10px;
+  border: 1px solid var(--color-panel-stroke, rgba(127, 111, 63, 0.17));
+  background: transparent;
+  color: var(--color-text, #ffffff);
+  text-align: center;
+}
+
+.markdown-v2 .markdown-body table tr {
+  background: transparent;
+  border-top: 0;
+}
+
+.markdown-v2 .markdown-body blockquote {
+  margin: 18px 0;
+  padding: 7px 12px 6px;
+  display: inline-block;
+  border-left: 0;
+  border: 1px solid var(--color-panel-stroke, rgba(127, 111, 63, 0.17));
+  border-radius: 2px;
+  background-color: var(--color-panel-fill, rgba(127, 111, 63, 0.05));
+  color: var(--color-gold, #b5842c);
+  font-size: var(--size-body, 20px);
+}
+
+.markdown-v2 .markdown-body blockquote p {
+  margin: 0;
+  color: inherit;
+}
+
+/* Collapsible brief sections: keep the V1 machinery, restate the heading voice.
+ * The summary carries the section's own heading element. */
+.markdown-v2 .markdown-body details.brief-section > summary.brief-section__summary h1,
+.markdown-v2 .markdown-body details.brief-section > summary.brief-section__summary h2,
+.markdown-v2 .markdown-body details.brief-section > summary.brief-section__summary h3 {
+  margin: 0;
+}
+
+/* Inline code stays mono but takes the gold frame tint. */
+.markdown-v2 .markdown-body code:not(pre code) {
+  background-color: var(--color-panel-fill, rgba(127, 111, 63, 0.05));
+  border: 1px solid var(--color-panel-stroke, rgba(127, 111, 63, 0.17));
+  border-radius: 2px;
+}

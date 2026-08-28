@@ -1,19 +1,51 @@
-{% extends "base.html" %}
+{# Clearance landing — v2 theme, standalone like index.html. Two modes: signed
+   in (confirm the clearance) or signed out (authenticate first). Keeps the
+   page--clearance body hook that clearance-redeem.js keys off. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Radspion — apply a clearance code to your agent account.">
+  <title>Clearance request — Radspion</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 
-{% block body_class %}page--landing page--clearance{% endblock %}
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/ibk6axw.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/radspion-v2.css') }}">
+</head>
+<body class="page-landing page--clearance">
 
-{% block content %}
-  <div class="landing landing--clearance">
-    <img
-      class="landing__mark"
-      src="{{ url_for('static', filename='img/radspion_mark_white.svg') }}"
-      width="176"
-      height="176"
-      alt=""
-    >
-    <h1 class="landing__title">Clearance request</h1>
-    <p class="landing__briefing">
-      Command sent <em>clearance</em> through a secure channel.
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages" role="status">
+        {% for category, message in messages %}
+          <p class="flash-message flash-message--{{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <header class="hero">
+    <div class="hero__lockup">
+      <img class="hero__mark" src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="209" height="209" alt="">
+      <div class="hero__wordmark">
+        <img src="{{ url_for('static', filename='img/radspion-wordmark.svg') }}" width="680" height="49" alt="Radspion">
+      </div>
+      <img class="hero__tagline" src="{{ url_for('static', filename='img/radspion-tagline.svg') }}" width="370" height="28" alt="Stay observant">
+    </div>
+  </header>
+
+  <main class="body-panel">
+    <div class="frame designation">
+      <h1 class="designation__text designation__heading">Clearance request</h1>
+    </div>
+
+    <p class="briefing">
+      Command sent clearance through a secure channel.<br>
       {% if signed_in %}
         Confirm below to list matching missions on your dashboard.
       {% else %}
@@ -22,23 +54,22 @@
     </p>
 
     {% if signed_in %}
-      <section class="clearance-panel clearance-panel--confirm" aria-label="Confirm clearance">
-        <form class="clearance-confirm-form" action="#" method="post">
+      <section class="auth auth--confirm" aria-label="Confirm clearance">
+        <h2 class="auth__heading">Confirm Clearance</h2>
+        <form class="clearance-confirm-form clearance-confirm" action="#" method="post">
           <input type="hidden" name="clearance_code" value="{{ clearance_code }}">
-          <button class="clearance-form__submit" type="submit">Request Access</button>
+          <button class="clearance-confirm__submit" type="submit">Request Access</button>
         </form>
-        <p class="access-panel__prompt access-panel__prompt--secondary">
+        <p class="clearance-confirm__alt">
           <a href="{{ url_for('agent.dashboard') }}">Return to Mission Dashboard</a>
         </p>
       </section>
     {% else %}
-      <section class="access-panel" aria-label="Agent authentication">
-        <p class="access-panel__prompt access-panel__prompt--auth">Agent Authentication</p>
-        <p class="access-panel__hint text-muted">
-          Sign in with Google to apply this clearance to your account.
-        </p>
-        <a href="{{ url_for('auth.google_login') }}" class="btn-google btn-google--agent-login">
-          <svg class="btn-google__icon" viewBox="0 0 48 48" aria-hidden="true">
+      <section class="auth" aria-labelledby="auth-heading">
+        <h2 class="auth__heading" id="auth-heading">Agent Authentication</h2>
+        <p class="auth__hint">Sign in with Google to apply this clearance to your account.</p>
+        <a class="btn-google" href="{{ url_for('auth.google_login') }}">
+          <svg class="btn-google__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
             <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -48,10 +79,10 @@
         </a>
       </section>
     {% endif %}
-  </div>
-{% endblock %}
 
-{% block extra_body %}
+    {% include "_site_footer_v2.html" %}
+  </main>
+
   {% include "_transmission_modal.html" %}
   <script>
     window.RADSPION_AUTH_GOOGLE_URL = {{ url_for('auth.google_login') | tojson }};
@@ -62,4 +93,5 @@
   {% if signed_in %}
     <script src="{{ url_for('static', filename='js/clearance-form.js') }}"></script>
   {% endif %}
-{% endblock %}
+</body>
+</html>

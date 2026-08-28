@@ -1,0 +1,94 @@
+{% extends "agent/base_agent_v2.html" %}
+
+{% block title %}Mission Data — Radspion{% endblock %}
+{% block canvas_class %}page-brief{% endblock %}
+{% block body_class %}page--mission-data{% endblock %}
+
+{% block extra_head %}
+  {% if completed_missions %}
+    {% include "_mission_markdown_styles_v2.html" %}
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/mission-detail-copy-data.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/intel-modal.js') }}" defer></script>
+{% endblock %}
+
+{% block agent_content %}
+  <div class="mission-data markdown-v2">
+    <header class="pagehead">
+      <h1 class="pagehead__title">Mission Data</h1>
+      <p class="pagehead__sub">Recovered field data &middot; agency archives</p>
+    </header>
+
+    {% if completed_missions %}
+      {# Group by story arc, preserving the dashboard's order (the route builds
+         the list in that order, so first-appearance order is the arc order). #}
+      {% set ns = namespace(arcs=[]) %}
+      {% for entry in completed_missions %}
+        {% if entry.group not in ns.arcs %}
+          {% set ns.arcs = ns.arcs + [entry.group] %}
+        {% endif %}
+      {% endfor %}
+
+      <div class="datagroups">
+        {% for arc in ns.arcs %}
+          {% set arc_entries = completed_missions | selectattr('group', 'equalto', arc) | list %}
+          <section class="datagroup" aria-labelledby="datagroup-{{ loop.index }}">
+            <div class="datagroup__head">
+              <h2 class="datagroup__title" id="datagroup-{{ loop.index }}">{{ arc }}</h2>
+              <span class="datagroup__count">
+                {{ arc_entries | length }} recovered
+              </span>
+            </div>
+
+            <div class="datacards">
+              {% for entry in arc_entries %}
+                {% set mission = entry.detail %}
+                <details class="panel datacard mission-panel__collapse">
+                  <summary class="datacard__summary mission-panel__summary">
+                    {% include "agent/_mission_chevron.html" %}
+                    <span class="datacard__title">{{ mission.title }}</span>
+                    <span class="datacard__meta text-mono">{{ mission.slug }}</span>
+                  </summary>
+
+                  <div class="datacard__body">
+                    <div class="datacard__body-head">
+                      <p class="datacard__label">Recovered Data</p>
+                      <button
+                        class="datacard__debrief intel__link"
+                        type="button"
+                        data-intel-open="debrief:{{ mission.slug }}"
+                        data-intel-label="Mission Debrief — {{ mission.title }}"
+                      >Mission Debrief
+                        <svg class="intel__icon" viewBox="0 0 14 13" aria-hidden="true" focusable="false">
+                          <path fill="currentColor" d="M2.5 0C1.67578 0 1 0.675781 1 1.5V4H2V1.5C2 1.21875 2.21875 1 2.5 1H12.5C12.7812 1 13 1.21875 13 1.5V11.5C13 11.7812 12.7812 12 12.5 12H2.5C2.21875 12 2 11.7812 2 11.5V9H1V11.5C1 12.3242 1.67578 13 2.5 13H12.5C13.3242 13 14 12.3242 14 11.5V1.5C14 0.675781 13.3242 0 12.5 0H2.5ZM6.72656 3.02344L6.02344 3.72656L8.29297 6H0V7H8.29297L6.02344 9.26953L6.72656 9.98047L10.207 6.5L6.72656 3.02344Z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="recovered-data__block">
+                      <pre class="recovered-data__value text-mono">{{ mission.recovered_data }}</pre>
+                    </div>
+                  </div>
+
+                  <template data-intel-content="debrief:{{ mission.slug }}">
+                    <article class="mission-markdown markdown-body">{{ mission.debrief_html }}</article>
+                  </template>
+                </details>
+              {% endfor %}
+            </div>
+          </section>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="panel datacard datacard--empty">
+        <p class="datacard__empty-text">
+          No mission data on file yet. Complete a mission and its recovered data and
+          debrief are archived here.
+        </p>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if completed_missions %}
+    {% include "_intel_modal.html" %}
+  {% endif %}
+{% endblock %}
