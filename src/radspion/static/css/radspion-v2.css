@@ -383,10 +383,18 @@ body.page-landing {
   margin: 0;
 }
 
-/* Scoped with the parent so this outranks the `.site-footer p` reset above —
- * `.site-footer p` is (0,1,1) and would otherwise win against a lone class. */
-.site-footer .site-footer__legal {
+/* "Moravian University · Educational Use Only" — deliberately small and
+ * subtle, tucked bottom-right: a reassurance for anyone who stumbles onto the
+ * site that it is fiction, not a real operation. Scoped with the parent so it
+ * outranks the `.site-footer p` reset above ((0,1,1) vs a lone class). */
+.site-footer .site-footer__edu {
   margin-top: 29px; /* 1174 - (1128 + 17) */
+  padding-right: 40px;
+  text-align: right;
+  color: var(--color-sub);
+  font-size: var(--size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .site-footer a {
@@ -790,6 +798,76 @@ body.page-landing {
   height: 25px;
 }
 
+/* Bottom of the rail, after a separator: the site links (What is Radspion?,
+ * Privacy Policy) that used to sit in the footer. `margin-top: auto` pins the
+ * group to the foot of the rail, which the shell stretches to the content. */
+.rail__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 24px;
+  padding-bottom: 36px;
+}
+
+.rail__sep {
+  display: block;
+  width: 34px;
+  height: 1px;
+  margin-bottom: 10px;
+  background-color: var(--color-panel-stroke);
+}
+
+.rail__link--site {
+  height: 40px;
+}
+
+.rail__icon--site {
+  width: 21px;
+  height: 21px;
+}
+
+/* ---------------------------------------------------------- rail tooltips */
+
+/* Styled hover / focus labels for the icon-only rail, in place of the browser's
+ * default title bubble. Drawn with ::before because ::after already paints the
+ * active item's gold segment. The label sits to the right of the icon, just
+ * over the content column, and slides in a few pixels as it fades up. */
+.rail__link[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 18px);
+  top: 50%;
+  z-index: 20;
+  padding: 7px 11px 6px;
+  border: 1px solid var(--color-gold-dim);
+  border-radius: var(--radius-sm);
+  background-color: #0d0c0a;
+  color: var(--color-gold-light);
+  font-size: var(--size-micro);
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-6px, -50%);
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.rail__link[data-tooltip]:hover::before,
+.rail__link[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail__link[data-tooltip]::before {
+    transition: none;
+  }
+}
+
 /* Content column. Panels align on x=174/175; the page title sits at x=171. */
 .content {
   padding: 58px 143px 0 69px;
@@ -1061,15 +1139,40 @@ body.page-landing {
   cursor: pointer;
 }
 
+/* A real checkbox: an outlined box when off, filled gold with a check when on
+ * (Figma drew a solid square in both states, which read as a bullet). */
 .showcomp__box {
+  position: relative;
   width: 15px;
   height: 15px;
   flex: none;
   margin: 2px 0 0;
   appearance: none;
-  border: 0;
-  background-color: var(--color-gold);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
   cursor: pointer;
+}
+
+.showcomp__box:checked {
+  background-color: var(--color-gold);
+}
+
+.showcomp__box:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #000000;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.showcomp__box:focus-visible {
+  outline: 2px solid var(--color-gold-light);
+  outline-offset: 2px;
 }
 
 /* --------------------------------------------------------- mission group */
@@ -1632,20 +1735,39 @@ body.page-landing {
  * that node are not carried over: the band is offset 58px right of the canvas
  * and overflows it, and the footer block is centred on x=804 rather than the
  * canvas centre of 864. Both are squared up here. */
+/* No fill: Figma's tinted band read as a stray rule across the bottom of the
+ * page once the footer copy moved into the rail, so it now sits on the page
+ * background. The band keeps its height so the sticky-footer geometry holds. */
 .footer-band {
-  height: 203px; /* 1298 -> 1501 */
-  padding-top: 73px; /* footer text starts 1371 */
-  background-color: var(--color-panel-fill);
+  padding: 26px 40px 22px; /* content-sized: Figma's 203px band was mostly air */
 }
 
-/* This screen's footer is Sub (#2f2712), a step dimmer than the landing page's. */
+/* The signed-in footer. Figma had it a step dimmer (Sub, #2f2712) than the
+ * landing page; that read as unreadable in practice, so it now shares the
+ * landing page's dimmed-gold voice. */
 .site-footer--sub {
   margin-top: 0;
-  color: var(--color-sub);
+  color: var(--color-gold-dim);
 }
 
 .site-footer--sub a:hover {
-  color: var(--color-gold-dim);
+  color: var(--color-gold);
+}
+
+/* Signed in, the About / Privacy links live in the rail; the footer's copy of
+ * them only appears on phones, where the rail is hidden (see the 760px rules). */
+.site-footer__links--rail-fallback {
+  display: none;
+}
+
+.footer-band .site-footer__edu {
+  margin: 0;
+  padding-right: 0;
+}
+
+/* Public pages keep the About / Privacy row above the edu line. */
+.footer-band .site-footer__links:not(.site-footer__links--rail-fallback) + .site-footer__edu {
+  margin-top: 16px;
 }
 
 /* =========================================================================
@@ -1952,26 +2074,110 @@ body.has-transmission-modal {
   margin-left: 3px;
 }
 
-/* Welcome memo: arbitrary-length Markdown, so the one panel with no fixed
- * Figma box. The V1 tokens its markdown override stack consumes are restated
- * locally, like the transmission modal's. */
-.dashboard__welcome {
+/* (The welcome memo's own panel is gone: the memo is now the inbox's first
+ * message, read in the intel modal. `dashboard__welcome` survives only as the
+ * tests' hook on that message row.) */
+
+/* Missions panel spacing against the flow above (the inbox) — Figma's 45px
+ * card-to-panel gap. */
+.page-v2 .missions {
+  margin-top: 45px;
+}
+
+/* ------------------------------------------------------------------ inbox */
+
+/* The Figma mail panel at the welcome panel's full width, its height set by
+ * its rows. Rows are buttons (they open the reader), styled as the mockup's
+ * underlined links. */
+.mail--full {
+  --fade-w: 1448px;
+  --fade-x: -38px;
+  position: relative;
+  width: 1379px;
+  height: auto;
+  min-height: 136px;
+  margin-top: 39.2px;
+  margin-left: 3px;
+  padding: 31px 34px 28px;
+}
+
+.mail--full .mail__badge {
+  left: auto;
+  right: -15px;
+  top: -15px;
+}
+
+/* `.mail .mail__badge` sets display, which would beat the [hidden] reset. */
+.mail .mail__badge[hidden] {
+  display: none;
+}
+
+.mail--full .msg {
+  height: auto;
+  min-height: 40px;
+  padding-right: 120px;
+}
+
+/* Figma's read colour (Sub) vanishes against the panel; a read message is
+ * dimmed, not hidden. */
+.mail--full .msg--read {
+  color: var(--color-gold-dim);
+}
+
+.msg__link {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.msg__sender {
+  color: var(--color-text);
+}
+
+.msg--read .msg__sender {
+  color: inherit;
+}
+
+.msg__subject {
+  text-decoration: inherit;
+}
+
+.mail--full .msg__state {
+  left: auto;
+  right: 0;
+  top: 2px;
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.msg--unread .msg__state {
+  color: var(--color-gold);
+}
+
+.mail__empty {
+  margin: 16px 0 0;
+  color: var(--color-gold-dim);
+  font-size: var(--size-reg);
+  line-height: 1.2;
+}
+
+/* The welcome memo restates the V1 tokens its markdown override stack
+ * consumes (it used to live in .dashboard__welcome). */
+.intel-modal__body .mission-markdown {
   --space-lg: 1.5rem;
   --space-md: 1rem;
   --color-accent: #c4a35a;
   --color-border: #2e343c;
-  --fade-w: 1448px;
-  --fade-x: -38px;
-  width: 1379px;
-  margin-top: 24px;
-  margin-left: 3px;
-  padding: 24px 34px;
-}
-
-/* Missions panel spacing against the flow above (welcome or memo panel) —
- * Figma's 45px card-to-panel gap. */
-.page-v2 .missions {
-  margin-top: 45px;
 }
 
 /* Trailing whitespace on the Figma artboard is 398px with no footer; the app
@@ -2113,6 +2319,32 @@ button.topbar__logout {
   display: none;
 }
 
+/* "Show all N missions" under a capped story pack (dashboard.js). */
+.mission-list__more {
+  display: block;
+  margin: 14px 0 6px 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-gold-dim);
+  font-family: inherit;
+  font-size: var(--size-small);
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mission-list__more:hover,
+.mission-list__more:focus-visible {
+  color: var(--color-gold);
+}
+
+.mission-list__more[hidden] {
+  display: none;
+}
+
 .mission-card {
   display: grid;
   grid-template-columns: 210px 446px 300px 121px 26px;
@@ -2204,8 +2436,11 @@ button.intel__link:focus-visible {
   color: var(--color-gold);
 }
 
+/* A completed mission has nothing left to open from the arrow — its debrief
+ * and data are the Intel links, and the title still opens the file. The slot
+ * stays so the columns line up across rows. */
 .mission-card--completed .mission-card__arrow {
-  color: var(--color-text);
+  visibility: hidden;
 }
 
 .mission-card__arrow svg {
@@ -2281,7 +2516,7 @@ button.intel__link:focus-visible {
   }
 
   .welcome--full,
-  .page-v2 .dashboard__welcome,
+  .page-v2 .mail--full,
   .page-v2 .missions {
     width: auto;
     margin-left: 0;
@@ -2399,8 +2634,13 @@ button.intel__link:focus-visible {
     margin-top: 28px;
   }
 
-  .page-v2 .dashboard__welcome {
-    padding: 16px;
+  .page-v2 .mail--full {
+    min-height: 0;
+    padding: 24px 16px;
+  }
+
+  .mail--full .msg {
+    padding-right: 64px;
   }
 
   .page-v2 .missions {
@@ -2494,10 +2734,19 @@ button.intel__link:focus-visible {
     top: 18px;
   }
 
-  /* Footer band breathes a little less on a phone. */
   .page-v2 .footer-band {
-    height: auto;
-    padding: 48px 24px 56px;
+    padding: 24px 24px 32px;
+  }
+
+  /* No rail on a phone, so the footer carries the site links again and the
+   * edu line drops back into the flow beneath them. */
+  .site-footer__links--rail-fallback {
+    display: block;
+  }
+
+  .footer-band .site-footer__edu {
+    margin-top: 16px;
+    text-align: center;
   }
 }
 
@@ -2610,6 +2859,29 @@ button.intel__link:focus-visible {
   bottom: 0;
   width: 1px;
   background-color: var(--color-panel-stroke);
+}
+
+/* Radspion lockup atop the brief (agent/_brief_lockup.html): mark + wordmark
+ * on a hairline, before the markdown. */
+.brief-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-panel-stroke);
+}
+
+.brief-lockup__mark {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+
+.brief-lockup__wordmark {
+  display: block;
+  width: 248px;
+  height: 18px;
 }
 
 /* The v2 canvas draws no chrome around the prose column — these panels keep
@@ -2744,7 +3016,7 @@ body.has-intel-modal {
 .intel-modal {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 90; /* under the transmission modal (100), which it can open */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2814,6 +3086,199 @@ body.has-intel-modal {
 .intel-modal__body {
   margin-top: 20px;
   overflow-y: auto;
+}
+
+/* ---------------------------------------------------------- mission modal */
+
+/* The mission overlay: a mission row opens its brief here instead of on the
+ * separate page (mission-modal.js lifts the page's .brief-columns in). Wider
+ * than the intel modal because it hosts the two-column brief. The head sits
+ * outside the scrolling body, so it stays pinned while the brief, debrief and
+ * recovered data scroll beneath it. */
+body.has-mission-modal {
+  overflow: hidden;
+}
+
+.mission-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90; /* under the transmission modal (100), which it can open */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.mission-modal[hidden] {
+  display: none;
+}
+
+.mission-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.mission-modal__dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1240px, 100%);
+  max-height: 90vh;
+  overflow: hidden;
+  background-color: #0d0c0a;
+  border: 1px solid var(--color-panel-stroke);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+.mission-modal__head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px 32px 22px;
+  border-bottom: 1px solid var(--color-panel-stroke);
+}
+
+.mission-modal__kicker {
+  margin: 0 0 6px;
+  color: var(--color-gold-dim);
+  font-size: var(--size-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mission-modal__title {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: var(--size-h1);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.mission-modal__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: var(--color-gold-dim);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+}
+
+.mission-modal__meta .status-badge {
+  height: auto;
+  padding-left: 0;
+}
+
+.mission-modal__close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 7px;
+  border: 0;
+  background: none;
+  color: var(--color-gold);
+  cursor: pointer;
+}
+
+.mission-modal__close:hover {
+  color: var(--color-text);
+}
+
+.mission-modal__close svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.mission-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 32px 40px;
+}
+
+.mission-modal__loading {
+  margin: 0;
+  color: var(--color-gold-dim);
+  font-size: var(--size-small);
+}
+
+/* Linked-to but not yet accessible mission. */
+.mission-modal__locked {
+  max-width: 560px;
+  color: var(--color-gold-light);
+  font-size: var(--size-reg);
+  line-height: 1.35;
+}
+
+.mission-modal__locked p {
+  margin: 0 0 12px;
+}
+
+.mission-modal__locked-lead {
+  color: var(--color-text);
+  font-size: var(--size-body);
+}
+
+/* The lifted brief columns, sized to the dialog rather than the Figma canvas. */
+.mission-modal .brief-columns {
+  grid-template-columns: minmax(0, 1fr) 320px;
+  column-gap: 72px;
+  margin-top: 0;
+}
+
+.mission-modal .brief-columns .recover::before {
+  left: -36px;
+}
+
+/* The Recovered Data column rides along while the brief scrolls, and the
+ * field-data box is short enough that its Submit button stays in view; it can
+ * still be dragged taller. */
+.mission-modal .brief-columns .recover {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.mission-modal .recover__input {
+  width: 100%;
+  height: 160px;
+  min-height: 96px;
+  resize: vertical;
+}
+
+@media (max-width: 900px) {
+  .mission-modal {
+    padding: 0;
+  }
+
+  .mission-modal__dialog {
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .mission-modal__head,
+  .mission-modal__body {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .mission-modal .brief-columns {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 40px;
+  }
+
+  .mission-modal .brief-columns .recover::before {
+    display: none;
+  }
 }
 
 /* --------------------------------------------------------- copy affordance */
@@ -2981,9 +3446,15 @@ body.has-intel-modal {
   margin-top: 10px;
 }
 
-/* The debrief pop-out button: the intel link treatment, sized up a touch for a
- * standalone control. */
-.datacard__debrief {
+/* Brief / debrief pop-out buttons: the intel link treatment, sized up a touch
+ * for standalone controls. */
+.datacard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.datacard__popout {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -2999,8 +3470,8 @@ body.has-intel-modal {
   cursor: pointer;
 }
 
-.datacard__debrief:hover,
-.datacard__debrief:focus-visible {
+.datacard__popout:hover,
+.datacard__popout:focus-visible {
   color: var(--color-gold);
   border-color: var(--color-gold-dim);
 }
@@ -3105,9 +3576,14 @@ body.has-intel-modal {
 
 /* --------------------------------------------------------- content pages */
 
-/* About / Privacy — long-form prose in the v2 voice. */
+/* About / Privacy — long-form prose in the v2 voice. Signed in, they render
+ * in the agent shell's content column (base_content_v2.html). */
 .content-page {
   max-width: 680px;
+}
+
+.content-column {
+  padding-bottom: 80px;
 }
 
 .content-page__title {
@@ -3276,6 +3752,49 @@ body.has-intel-modal {
 
 .auth--confirm .auth__heading {
   margin-bottom: 26px;
+}
+
+/* Landing page, already signed in: the auth card offers the dashboard. */
+.auth--session .auth__heading {
+  margin-bottom: 12px;
+}
+
+.auth__hint--session {
+  margin: 0 auto 22px;
+}
+
+.auth__codename {
+  color: var(--color-text);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.auth__enter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.auth__signout {
+  margin: 18px 0 0;
+}
+
+.auth__signout-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-gold-dim);
+  font-family: inherit;
+  font-size: var(--size-small);
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+  cursor: pointer;
+}
+
+.auth__signout-btn:hover,
+.auth__signout-btn:focus-visible {
+  color: var(--color-gold);
 }
 
 .clearance-confirm {

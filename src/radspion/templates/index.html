@@ -57,10 +57,29 @@
 
     <p class="briefing">
       This channel is for authorized field personnel only.<br>
-      Identity verification is required.
+      {% if user %}
+        Identity verified. Welcome back, Agent {{ user.codename }}.
+      {% else %}
+        Identity verification is required.
+      {% endif %}
     </p>
 
     {# ========================================================= auth #}
+    {% if user %}
+      {# Signed in already: the card becomes the way in (and out). #}
+      <section class="auth auth--confirm auth--session" aria-labelledby="auth-heading">
+        <h2 class="auth__heading" id="auth-heading">Session Active</h2>
+        <p class="auth__hint auth__hint--session">
+          Signed in as Agent <strong class="auth__codename">{{ user.codename }}</strong>.
+        </p>
+        <div class="clearance-confirm">
+          <a class="clearance-confirm__submit auth__enter" href="{{ url_for('agent.dashboard') }}">Enter Mission Dashboard</a>
+        </div>
+        <form class="auth__signout" action="{{ url_for('auth.logout') }}" method="post">
+          <button class="auth__signout-btn" type="submit">Not you? Sign out</button>
+        </form>
+      </section>
+    {% else %}
     <section class="auth" aria-labelledby="auth-heading">
       <h2 class="auth__heading" id="auth-heading">Agent Authentication</h2>
 
@@ -74,6 +93,7 @@
         Sign in with Google
       </a>
     </section>
+    {% endif %}
 
     {# ======================================================= footer #}
     {% include "_site_footer_v2.html" %}

@@ -71,6 +71,37 @@ copy button) and its debrief (pop-out modal), grouped by story arc as an
 accordion. This page needs a route + context that are **not** in this change;
 see [v2-integration.md](v2-integration.md).
 
+## Dashboard behaviours (September 2026 meeting)
+
+- **Mission overlay** — a mission row's title / arrow opens the brief over the
+  dashboard (`_mission_modal.html`, `static/js/mission-modal.js`). The script
+  fetches `/agent/missions/<slug>` and lifts its `.brief-columns` in, so the
+  page stays the no-JS route and deep link. Active: brief + Recovered Data
+  form (`mission-detail-submit.js` exposes `RadspionMissionSubmit.wire`).
+  Completed: debrief, folded brief, archived data. After a successful submit,
+  OK reloads `/agent/dashboard#mission=<slug>` and the overlay reopens in its
+  completed state. Swap `loadMission()` for the JSON mission API when it exists.
+- **Inbox** — the Figma mail panel, full width (`static/js/inbox.js`). Until
+  the messages table exists the template builds `inbox` from the welcome memo
+  (one message while no mission is completed; empty afterwards). Read state is
+  per agent in `localStorage`; the first unread message auto-opens once — the
+  "Welcome, Agent" overlay on first login. Messages are read through the intel
+  modal, which now also accepts hidden inline `[data-intel-content]` sources
+  and exposes `RadspionIntelModal.open`. When the backend passes `inbox`
+  (`[{id, sender, subject, html}]`), the fallback drops away.
+- **Story-pack cap** — `data-collapse-after="8"` on the missions panel;
+  `dashboard.js` shows the first N rows of a pack and a "Show all N missions"
+  control, recomputed with the Show-completed toggle.
+- **Brief lockup** — `agent/_brief_lockup.html` renders the mark + wordmark
+  (never the tagline: "STAY OBSERVANT" is a clearance code) above every brief,
+  on the page, in the overlay and in the author preview.
+- **Rail** — tooltips via `data-tooltip` (CSS only); About / Privacy live at
+  the rail's foot behind a separator and render in the agent shell when signed
+  in (`base_content_v2.html`). Field Activity is unsurfaced: no links to it.
+- **Modals** render at body level (`agent_extra_body`), never inside
+  `.content` — the canvas's children are stacking contexts and the footer band
+  would paint over a dialog placed there.
+
 ## What every page looks like now
 
 Landing, clearance, dashboard, mission brief, mission data, personnel file,

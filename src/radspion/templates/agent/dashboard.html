@@ -3,12 +3,16 @@
 {% block title %}Mission Dashboard — Radspion{% endblock %}
 
 {% block extra_head %}
-  {% if welcome_memo_html or intel_missions %}
-    {% include "_mission_markdown_styles_v2.html" %}
-  {% endif %}
+  {# Markdown styles are always needed now: any mission's brief can open in
+     the overlay, not only the welcome memo and completed-mission intel. #}
+  {% include "_mission_markdown_styles_v2.html" %}
   <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/mission-detail-copy-data.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/intel-modal.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/inbox.js') }}" defer></script>
+  {# Submit script before the overlay: the overlay wires the lifted form. #}
+  <script src="{{ url_for('static', filename='js/mission-detail-submit.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/mission-modal.js') }}" defer></script>
 {% endblock %}
 
 {% block agent_content %}
@@ -18,26 +22,76 @@
       <p class="pagehead__sub">Radspion field operations system</p>
     </header>
 
-    {# Figma pairs the welcome panel with a Messages panel that has no data
-       behind it, so the welcome takes the full content width instead. #}
-    <section class="panel welcome welcome--full" aria-labelledby="welcome-title">
-      <h2 class="welcome__title" id="welcome-title">Welcome, Agent {{ user.codename }}</h2>
-      <p class="welcome__body">
-        You are cleared to review and request access to missions below.<br>
-        Submit a clearance code to request access to any active mission.
-      </p>
+    {# Messages — the Figma "mail" panel, full width. Front-end mock of the
+       messaging system: until the messages table exists, the inbox holds the
+       welcome memo as its one message (only while no mission is completed;
+       after that the inbox is empty) and read state lives in the browser
+       (static/js/inbox.js). When the backend supplies `inbox` — a list of
+       {id, sender, subject, html} — the fallback below drops away. #}
+    {% if inbox is not defined %}
+      {% set inbox = [] %}
+      {% if welcome_memo_html %}
+        {% set inbox = [{
+          'id': 'welcome',
+          'sender': 'Director of Agent Development',
+          'subject': 'RE: Basic Training',
+          'html': welcome_memo_html,
+        }] %}
+      {% endif %}
+    {% endif %}
+    <section
+      class="panel mail mail--full"
+      aria-labelledby="mail-title"
+      data-inbox
+      data-agent-id="{{ user.id }}"
+    >
+      <div class="mail__head">
+        <svg class="mail__icon" viewBox="0 0 15 15" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M0 2.5v10h15v-10H0Zm1.5 1.4 6 4.2 6-4.2V11h-12V3.9Zm.9-.4h10.2L7.5 6.9 2.4 3.5Z"/>
+        </svg>
+        <h2 class="mail__title" id="mail-title">Messages</h2>
+        <p class="mail__badge" data-inbox-badge hidden></p>
+      </div>
+
+      {% if inbox %}
+        <ul class="mail__list">
+          {% for message in inbox %}
+            {# dashboard__welcome: the welcome memo's hook for the tests. #}
+            <li
+              class="msg msg--unread{% if message.id == 'welcome' %} dashboard__welcome{% endif %}"
+              data-inbox-message="{{ message.id }}"
+            >
+              <span class="msg__dot" aria-hidden="true"></span>
+              <button
+                class="msg__link"
+                type="button"
+                data-intel-open="message:{{ message.id }}"
+                data-intel-label="{% if message.id == 'welcome' %}Welcome, Agent {{ user.codename }}{% else %}{{ message.subject }}{% endif %}"
+                data-inbox-open
+              >
+                <span class="msg__sender">{{ message.sender }}</span>
+                <span class="msg__subject">{{ message.subject }}</span>
+              </button>
+              <span class="msg__state text-mono" data-inbox-state>New</span>
+              {# Message body, inline (not a <template>) so it is real DOM;
+                 intel-modal.js clones it into the reader. #}
+              <div class="msg__body" data-intel-content="message:{{ message.id }}" hidden>
+                <article
+                  class="mission-markdown markdown-body"
+                  aria-label="Welcome memo from Radspion Command"
+                >{{ message.html }}</article>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mail__empty">No new messages. Your inbox is clear.</p>
+      {% endif %}
     </section>
 
-    {% if welcome_memo_html %}
-      <section
-        class="panel dashboard__welcome mission-content-panel markdown-v2"
-        aria-label="Welcome memo from Radspion Command"
-      >
-        <article class="mission-markdown markdown-body">{{ welcome_memo_html }}</article>
-      </section>
-    {% endif %}
-
-    <section class="panel missions" aria-labelledby="missions-title">
+    {# data-collapse-after: a story pack with more missions than this shows
+       the first N and a "Show all" control (dashboard.js). #}
+    <section class="panel missions" aria-labelledby="missions-title" data-collapse-after="8">
       <div class="missions__head">
         <h2 class="missions__title" id="missions-title">Missions</h2>
         {% if completed_total > 0 %}
@@ -79,7 +133,16 @@
               >
                 <div class="mission-card mission-card--{{ mission.status }}">
                   <span class="mission-card__slug text-mono">{{ mission.slug }}</span>
-                  <a class="mission-card__link" href="{{ url_for('agent.mission_detail', slug=mission.slug) }}">
+                  {# The title and arrow keep their href (the mission page is
+                     the no-JS route); mission-modal.js opens the brief in an
+                     overlay instead. #}
+                  <a
+                    class="mission-card__link"
+                    href="{{ url_for('agent.mission_detail', slug=mission.slug) }}"
+                    data-mission-open="{{ mission.slug }}"
+                    data-mission-open-title="{{ mission.title }}"
+                    data-mission-open-status="{{ mission.status }}"
+                  >
                     <span class="mission-card__title">{{ mission.title }}</span>
                   </a>
                   <span class="mission-card__intel intel">
@@ -111,6 +174,9 @@
                     class="mission-card__arrow"
                     href="{{ url_for('agent.mission_detail', slug=mission.slug) }}"
                     aria-label="Open {{ mission.title }}"
+                    data-mission-open="{{ mission.slug }}"
+                    data-mission-open-title="{{ mission.title }}"
+                    data-mission-open-status="{{ mission.status }}"
                   >
                     <svg viewBox="0 0 14 13" aria-hidden="true" focusable="false">
                       <path fill="currentColor" d="M2.5 0C1.67578 0 1 0.675781 1 1.5V4H2V1.5C2 1.21875 2.21875 1 2.5 1H12.5C12.7812 1 13 1.21875 13 1.5V11.5C13 11.7812 12.7812 12 12.5 12H2.5C2.21875 12 2 11.7812 2 11.5V9H1V11.5C1 12.3242 1.67578 13 2.5 13H12.5C13.3242 13 14 12.3242 14 11.5V1.5C14 0.675781 13.3242 0 12.5 0H2.5ZM6.72656 3.02344L6.02344 3.72656L8.29297 6H0V7H8.29297L6.02344 9.26953L6.72656 9.98047L10.207 6.5L6.72656 3.02344Z"/>
@@ -136,12 +202,15 @@
     </section>
   </div>
 
-  {% if intel_missions %}
-    {% include "_intel_modal.html" %}
-  {% endif %}
 {% endblock %}
 
 {% block agent_extra_body %}
+  {# Modals render at body level, outside .canvas: its children each form a
+     stacking context, so a fixed dialog inside .content would be painted over
+     by the later .footer-band no matter its z-index. #}
+  {# Always present: the inbox reads its messages through it too. #}
+  {% include "_intel_modal.html" %}
+  {% include "_mission_modal.html" %}
   {% if post_login_clearance_result %}
     <script>
       window.RADSPION_POST_LOGIN_CLEARANCE = {{ post_login_clearance_result | tojson }};

@@ -1,5 +1,10 @@
 /**
- * Mission detail: data form → POST /api/missions/<slug>/submit → transmission modal.
+ * Mission data form → POST /api/missions/<slug>/submit → transmission modal.
+ *
+ * Wires the form on the mission page automatically; the dashboard's mission
+ * overlay wires the form it lifts in via `RadspionMissionSubmit.wire(form,
+ * { onSuccessOk })`, where `onSuccessOk(slug)` replaces the default
+ * reload-in-place when the agent dismisses the "Data Accepted" outcome.
  */
 (function () {
   "use strict";
@@ -10,7 +15,14 @@
     "We received your transmission, but the recovered data does not match mission " +
     "parameters. Continue your fieldwork and submit again when you have the correct value.";
 
-  function renderSuccess(outcomeEl, newMissions) {
+  function wireOk(outcomeEl, handler) {
+    var ok = outcomeEl.querySelector(".transmission-modal__ok");
+    if (ok) {
+      ok.addEventListener("click", handler, { once: true });
+    }
+  }
+
+  function renderSuccess(outcomeEl, newMissions, onOk) {
     var html =
       Outcome.outcomeHeaderHtml("Data", "Accepted", "success") +
       '<p class="transmission-modal__message">' +
@@ -32,7 +44,11 @@
       Outcome.okButton;
 
     outcomeEl.innerHTML = html;
-    Outcome.wireOkReloadTop(outcomeEl);
+    if (onOk) {
+      wireOk(outcomeEl, onOk);
+    } else {
+      Outcome.wireOkReloadTop(outcomeEl);
+    }
   }
 
   function renderInvalid(outcomeEl, message) {
@@ -76,39 +92,49 @@
     });
   }
 
-  var form = document.querySelector(".recovered-data-form");
-  if (!form || !window.RadspionTransmission) {
-    return;
-  }
-
-  var slug = form.getAttribute("data-mission-slug");
-  if (!slug) {
-    return;
-  }
-
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
-    var input = form.querySelector('[name="completion_data"]');
-    var completionData = input ? input.value : "";
-
-    window.RadspionTransmission.transmit({
-      preset: window.RadspionTransmission.PRESET.COMPLETION_DATA,
-      request: function () {
-        return postSubmit(slug, completionData).catch(function () {
-          return { outcome: "invalid", message: INVALID_FALLBACK };
-        });
-      },
-      renderOutcome: function (data, outcomeEl) {
-        if (data.outcome === "success") {
-          renderSuccess(outcomeEl, data.new_missions || []);
-          return;
+  function wireForm(form, options) {
+    options = options || {};
+    if (!form || !window.RadspionTransmission) {
+      return;
+    }
+    var slug = form.getAttribute("data-mission-slug");
+    if (!slug) {
+      return;
+    }
+    var onSuccessOk = options.onSuccessOk
+      ? function () {
+          options.onSuccessOk(slug);
         }
-        if (data.outcome === "already_done") {
-          renderAlreadyDone(outcomeEl, data.message);
-          return;
-        }
-        renderInvalid(outcomeEl, data.message);
-      },
+      : null;
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var input = form.querySelector('[name="completion_data"]');
+      var completionData = input ? input.value : "";
+
+      window.RadspionTransmission.transmit({
+        preset: window.RadspionTransmission.PRESET.COMPLETION_DATA,
+        request: function () {
+          return postSubmit(slug, completionData).catch(function () {
+            return { outcome: "invalid", message: INVALID_FALLBACK };
+          });
+        },
+        renderOutcome: function (data, outcomeEl) {
+          if (data.outcome === "success") {
+            renderSuccess(outcomeEl, data.new_missions || [], onSuccessOk);
+            return;
+          }
+          if (data.outcome === "already_done") {
+            renderAlreadyDone(outcomeEl, data.message);
+            return;
+          }
+          renderInvalid(outcomeEl, data.message);
+        },
+      });
     });
-  });
+  }
+
+  window.RadspionMissionSubmit = { wire: wireForm };
+
+  wireForm(document.querySelector(".recovered-data-form"));
 })();

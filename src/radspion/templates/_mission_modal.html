@@ -1,0 +1,29 @@
+{# Mission overlay — the brief (and, once the mission is completed, the debrief
+   and recovered data) opened in place over the dashboard instead of on a
+   separate page. static/js/mission-modal.js fetches /agent/missions/<slug>
+   and lifts its .brief-columns into the body, so the mission page stays the
+   single source of truth and the no-JS / deep-link route. The head sits
+   outside the scrolling body, so it stays put while the brief scrolls. #}
+<div class="mission-modal" data-mission-modal hidden>
+  <div class="mission-modal__backdrop" data-mission-close></div>
+  <section
+    class="mission-modal__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="mission-modal-title"
+  >
+    <header class="mission-modal__head">
+      <div class="mission-modal__heading">
+        <p class="mission-modal__kicker" data-mission-kicker>Mission Brief</p>
+        <h2 class="mission-modal__title" id="mission-modal-title" data-mission-title></h2>
+        <p class="mission-modal__meta text-mono" data-mission-meta></p>
+      </div>
+      <button class="mission-modal__close" type="button" data-mission-close aria-label="Close">
+        <svg viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M1.05 0L0 1.05 5.95 7 0 12.95 1.05 14 7 8.05 12.95 14 14 12.95 8.05 7 14 1.05 12.95 0 7 5.95 1.05 0Z"/>
+        </svg>
+      </button>
+    </header>
+    <div class="mission-modal__body markdown-v2" data-mission-body></div>
+  </section>
+</div>

@@ -31,6 +31,17 @@ touched. The route uses only facade methods that already exist.
 
 ---
 
+## 0. Landing / About / Privacy know who is signed in
+
+`src/radspion/web/main.py` — the `index`, `about` and `privacy` views now
+resolve the optional session user (the same `resolve_optional_session_user()`
+call the `activity` view makes) and pass it as `user`. The landing page swaps
+its Google sign-in card for a "Session Active" card with a way into the
+dashboard; `base_content_v2.html` gives About / Privacy the signed-in shell
+(header bar, rail, footer) when `user` is set and the public shell otherwise.
+No new routes, no storage changes; a signed-out visitor sees exactly what they
+saw before.
+
 ## 1. Required: `mission_data` route + dashboard `intel_missions` context
 
 `src/radspion/web/agent.py`. Without this, a clean checkout **500s on every

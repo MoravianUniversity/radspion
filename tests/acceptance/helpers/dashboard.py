@@ -8,10 +8,19 @@ STORYLINE_SLUGS = ("es-alpha", "es-beta", "es-gamma", "es-delta", "es-hidden")
 
 
 def open_agent_dashboard(page: Page, base_url: str, login_as, agent_key: str) -> None:
-    """Sign in and open the mission dashboard."""
+    """Sign in and open the mission dashboard, past the first-login welcome overlay."""
     login_as(agent_key)
     page.goto(f"{base_url}/agent/dashboard")
     expect(page.get_by_role("heading", name="Mission Dashboard")).to_be_visible()
+    dismiss_welcome_overlay(page)
+
+
+def dismiss_welcome_overlay(page: Page) -> None:
+    """Close the welcome overlay if it opened; a no-op for agents past first login."""
+    modal = page.locator("[data-intel-modal]")
+    if modal.count() and modal.is_visible():
+        modal.locator(".intel-modal__close").click()
+        expect(modal).to_be_hidden()
 
 
 def mission_list_item(page: Page, slug: str):

@@ -35,6 +35,9 @@ def test_mission_data_lists_completed_recovered_data(testing_storyline_client):
     assert "datacard--empty" not in body
     assert "COMPLETE es-alpha" in body
     assert 'data-intel-open="debrief:es-alpha"' in body
+    assert 'data-intel-open="brief:es-alpha"' in body
+    assert 'data-intel-content="brief:es-alpha"' in body
+    assert "overview for the mission called ES: Alpha" in body
     assert "recovered-data__value" in body
     assert "ES: Alpha" in body
     assert "Welcome to Radspion" in body

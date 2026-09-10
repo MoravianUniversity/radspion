@@ -1,0 +1,9 @@
+{# Radspion lockup at the top of every mission brief, rendered server-side
+   from static resources — the brief body itself comes from markdown. Mark and
+   wordmark only: the "STAY OBSERVANT" tagline is deliberately left out. It is
+   a clearance code, repeated at mission ends, and showing it in the logo would
+   have players read it as branding instead of a code. #}
+<div class="brief-lockup" role="img" aria-label="Radspion">
+  <img class="brief-lockup__mark" src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="44" height="44" alt="">
+  <img class="brief-lockup__wordmark" src="{{ url_for('static', filename='img/radspion-wordmark.svg') }}" width="248" height="18" alt="">
+</div>

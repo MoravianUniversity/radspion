@@ -63,3 +63,32 @@ def test_uc_031_bob_all_storyline_missions_completed(
     expect_mission_on_dashboard(page, "basic-training", "completed")
     for slug in BOB_STORYLINE_SLUGS:
         expect_mission_on_dashboard(page, slug, "completed")
+
+
+def test_first_login_shows_welcome_overlay_once(page: Page, live_app: LiveApp, login_as) -> None:
+    """A new agent's first dashboard visit opens the welcome message; later visits do not."""
+    login_as("diana")
+    page.goto(f"{live_app.base_url}/agent/dashboard")
+
+    modal = page.locator("[data-intel-modal]")
+    expect(modal).to_be_visible()
+    expect(modal.locator("#intel-modal-title")).to_have_text("Welcome, Agent Diana")
+    expect(modal.locator(".mission-markdown.markdown-body")).to_contain_text("Welcome to Radspion")
+
+    # A mission link inside the message opens that brief in the overlay, not on a page.
+    modal.get_by_role("link", name="Basic Training").click()
+    expect(modal).to_be_hidden()
+    mission_modal = page.locator("[data-mission-modal]")
+    expect(mission_modal).to_be_visible()
+    expect(mission_modal.locator("#mission-modal-title")).to_have_text("Welcome to Radspion")
+    expect(page).to_have_url(f"{live_app.base_url}/agent/dashboard")
+    mission_modal.locator(".mission-modal__close").click()
+    expect(mission_modal).to_be_hidden()
+    expect(page.locator(".msg--read")).to_have_count(1)
+
+    page.reload()
+    expect(page.get_by_role("heading", name="Mission Dashboard")).to_be_visible()
+    expect(modal).to_be_hidden()
+    # The message is still in the inbox, now marked read, and reopens on demand.
+    page.locator("[data-inbox-open]").click()
+    expect(modal).to_be_visible()

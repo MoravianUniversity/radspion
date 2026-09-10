@@ -40,6 +40,7 @@ def test_privacy(client):
     assert "Privacy Policy" in html
     assert "Google" in html
     assert 'href="/privacy"' in html
+    assert 'href="mailto:colemanb@moravian.edu"' in html
 
 
 def test_unknown_route_returns_themed_404(client):
@@ -57,3 +58,49 @@ def test_api_unknown_route_returns_json_404(client):
     assert response.status_code == 404
     assert response.is_json
     assert response.get_json() == {"error": "Not found"}
+
+
+def test_about_and_privacy_use_signed_in_shell_for_agents(testing_storyline_client):
+    """Signed in, About / Privacy render in the agent shell with the rail and codename."""
+    from radspion.web.session_keys import SESSION_USER_ID
+    from tests.helpers import SAMPLE_AGENTS
+
+    with testing_storyline_client.session_transaction() as sess:
+        sess[SESSION_USER_ID] = SAMPLE_AGENTS["alice"]["id"]
+
+    for path, active in (("/about", "What is Radspion?"), ("/privacy", "Privacy Policy")):
+        html = testing_storyline_client.get(path).data.decode()
+        assert 'class="topbar"' in html
+        assert "Alice" in html
+        assert "site-header--public" not in html
+        assert 'href="/agent/dashboard"' in html
+        assert "Return to sign-in" not in html
+        assert f'data-tooltip="{active}"' in html
+        assert "rail__link--active" in html
+
+
+def test_about_and_privacy_use_public_shell_when_signed_out(client):
+    for path in ("/about", "/privacy"):
+        html = client.get(path).data.decode()
+        assert "site-header--public" in html
+        assert 'class="topbar"' not in html
+        assert "Return to sign-in" in html
+
+
+def test_index_offers_dashboard_when_signed_in(testing_storyline_client):
+    """A signed-in agent landing on / gets the dashboard, not the Google button."""
+    from radspion.web.session_keys import SESSION_USER_ID
+    from tests.helpers import SAMPLE_AGENTS
+
+    with testing_storyline_client.session_transaction() as sess:
+        sess[SESSION_USER_ID] = SAMPLE_AGENTS["alice"]["id"]
+
+    html = testing_storyline_client.get("/").data.decode()
+
+    assert "Session Active" in html
+    assert "Alice" in html
+    assert 'href="/agent/dashboard"' in html
+    assert "Enter Mission Dashboard" in html
+    assert 'action="/auth/logout"' in html
+    assert "Sign in with Google" not in html
+    assert "Agent Authentication" not in html

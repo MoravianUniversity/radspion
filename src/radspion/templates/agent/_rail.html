@@ -1,12 +1,18 @@
 {# Sidebar rail (Figma "SIDEBAR" 7:83): section nav with a gold active segment
    that slides to the selected section. Shared by base_agent_v2 and standalone
-   signed-in pages (personnel). #}
+   signed-in pages (personnel).
+
+   Each item carries a data-tooltip that CSS renders as a styled label on
+   hover / keyboard focus (static/css/radspion-v2.css, "rail tooltips");
+   aria-label keeps the accessible name for screen readers. The bottom group,
+   after a separator, holds the site links that used to sit in the footer. #}
 <nav class="rail" aria-label="Sections">
   {% set endpoint = request.endpoint %}
   <a
     class="rail__link{% if endpoint == 'agent.dashboard' %} rail__link--active{% endif %}"
     href="{{ url_for('agent.dashboard') }}"
     aria-label="Mission Dashboard"
+    data-tooltip="Mission Dashboard"
     {% if endpoint == 'agent.dashboard' %}aria-current="page"{% endif %}
   >
     <svg class="rail__icon rail__icon--home" viewBox="0 26.4756 27.5244 23.7744" aria-hidden="true" focusable="false">
@@ -17,6 +23,7 @@
     class="rail__link{% if endpoint == 'agent.mission_data' %} rail__link--active{% endif %}"
     href="{{ url_for('agent.mission_data') }}"
     aria-label="Mission Data"
+    data-tooltip="Mission Data"
     {% if endpoint == 'agent.mission_data' %}aria-current="page"{% endif %}
   >
     {# Archive / data store — placeholder icon, easily swapped. #}
@@ -30,6 +37,7 @@
     class="rail__link{% if endpoint == 'agent.personnel' %} rail__link--active{% endif %}"
     href="{{ url_for('agent.personnel') }}"
     aria-label="Personnel File"
+    data-tooltip="Personnel File"
     {% if endpoint == 'agent.personnel' %}aria-current="page"{% endif %}
   >
     <svg class="rail__icon rail__icon--file" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
@@ -37,4 +45,33 @@
       <path d="M4.5 20.5C4.5 16.63 7.86 14 12 14C16.14 14 19.5 16.63 19.5 20.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
     </svg>
   </a>
+
+  <div class="rail__bottom">
+    <span class="rail__sep" aria-hidden="true"></span>
+    <a
+      class="rail__link rail__link--site{% if endpoint == 'main.about' %} rail__link--active{% endif %}"
+      href="{{ url_for('main.about') }}"
+      {% if endpoint == 'main.about' %}aria-current="page"{% endif %}
+      aria-label="What is Radspion?"
+      data-tooltip="What is Radspion?"
+    >
+      <svg class="rail__icon rail__icon--site" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M9.5 9.5C9.5 8.1 10.6 7 12 7C13.4 7 14.5 8.1 14.5 9.5C14.5 11.2 12 11.4 12 13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="12" cy="16.75" r="0.9" fill="currentColor"/>
+      </svg>
+    </a>
+    <a
+      class="rail__link rail__link--site{% if endpoint == 'main.privacy' %} rail__link--active{% endif %}"
+      href="{{ url_for('main.privacy') }}"
+      {% if endpoint == 'main.privacy' %}aria-current="page"{% endif %}
+      aria-label="Privacy Policy"
+      data-tooltip="Privacy Policy"
+    >
+      <svg class="rail__icon rail__icon--site" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <path d="M12 3L4.5 6V11C4.5 15.6 7.7 19.7 12 21C16.3 19.7 19.5 15.6 19.5 11V6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M9 12L11.2 14.2L15.2 9.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
 </nav>

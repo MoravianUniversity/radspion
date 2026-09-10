@@ -16,19 +16,31 @@ def favicon():
     )
 
 
+def _render_with_session_user(template: str):
+    """Render a public page that adapts when an agent is signed in.
+
+    The landing page swaps its sign-in card for a way into the dashboard; About
+    and Privacy render inside the signed-in shell.
+    """
+    user = resolve_optional_session_user()
+    if user is not None:
+        g.user = user
+    return render_template(template, user=user)
+
+
 @main_bp.get("/")
 def index():
-    return render_template("index.html")
+    return _render_with_session_user("index.html")
 
 
 @main_bp.get("/about")
 def about():
-    return render_template("about.html")
+    return _render_with_session_user("about.html")
 
 
 @main_bp.get("/privacy")
 def privacy():
-    return render_template("privacy.html")
+    return _render_with_session_user("privacy.html")
 
 
 @main_bp.get("/activity")
