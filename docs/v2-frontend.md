@@ -83,7 +83,8 @@ see [v2-integration.md](v2-integration.md).
   completed state. Swap `loadMission()` for the JSON mission API when it exists.
 - **Inbox** — the Figma mail panel, full width (`static/js/inbox.js`). Until
   the messages table exists the template builds `inbox` from the welcome memo
-  (one message while no mission is completed; empty afterwards). Read state is
+  (one message while no mission is completed; the panel is not rendered
+  at all once the inbox is empty). Read state is
   per agent in `localStorage`; the first unread message auto-opens once — the
   "Welcome, Agent" overlay on first login. Messages are read through the intel
   modal, which now also accepts hidden inline `[data-intel-content]` sources

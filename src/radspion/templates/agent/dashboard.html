@@ -39,6 +39,8 @@
         }] %}
       {% endif %}
     {% endif %}
+    {# No messages, no panel — the dashboard goes straight to the missions. #}
+    {% if inbox %}
     <section
       class="panel mail mail--full"
       aria-labelledby="mail-title"
@@ -53,7 +55,6 @@
         <p class="mail__badge" data-inbox-badge hidden></p>
       </div>
 
-      {% if inbox %}
         <ul class="mail__list">
           {% for message in inbox %}
             {# dashboard__welcome: the welcome memo's hook for the tests. #}
@@ -84,10 +85,8 @@
             </li>
           {% endfor %}
         </ul>
-      {% else %}
-        <p class="mail__empty">No new messages. Your inbox is clear.</p>
-      {% endif %}
     </section>
+    {% endif %}
 
     {# data-collapse-after: a story pack with more missions than this shows
        the first N and a "Show all" control (dashboard.js). #}

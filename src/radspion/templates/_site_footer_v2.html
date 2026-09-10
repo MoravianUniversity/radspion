@@ -5,12 +5,17 @@
    deliberately not linked anywhere for now — the page stays live but
    unsurfaced until its purpose is settled. #}
 <footer class="site-footer{% if footer_variant == 'sub' %} site-footer--sub{% endif %}">
+  {# Mark over wordmark, centred; the tagline stays out (it is a clearance code). #}
+  <div class="site-footer__lockup" role="img" aria-label="Radspion">
+    <img class="site-footer__mark" src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="40" height="40" alt="">
+    <img class="site-footer__wordmark" src="{{ url_for('static', filename='img/radspion-wordmark.svg') }}" width="180" height="13" alt="">
+  </div>
   <p class="site-footer__links{% if footer_variant == 'sub' %} site-footer__links--rail-fallback{% endif %}">
     <a href="{{ url_for('main.about') }}">What is Radspion?</a> &nbsp;&middot;&nbsp;
     <a href="{{ url_for('main.privacy') }}">Privacy Policy</a>
   </p>
-  {# Small and out of the way: a reassurance for anyone who stumbles in that
-     this is fiction, not a real operation. #}
+  {# Small and quiet, under the lockup: a reassurance for anyone who stumbles
+     in that this is fiction, not a real operation. #}
   <p class="site-footer__edu">Moravian University &middot; Educational Use Only</p>
   <!-- ORUTNRSOAN -->
 </footer>

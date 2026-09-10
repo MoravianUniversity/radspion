@@ -78,7 +78,7 @@ def test_dashboard_shows_welcome_memo_when_no_missions_completed(testing_storyli
     assert "Director of Agent Development" in body
     assert "data-intel-modal" in body
     assert "inbox.js" in body
-    assert "mail__empty" not in body
+    assert "data-inbox" in body
     assert "Show completed missions" not in body
 
 
@@ -90,7 +90,9 @@ def test_dashboard_hides_welcome_memo_after_first_completion(testing_storyline_c
 
     assert "dashboard__welcome" not in body
     assert "message:welcome" not in body
-    assert "No new messages" in body
+    # An empty inbox is not shown at all.
+    assert "data-inbox" not in body
+    assert "mail__title" not in body
     assert "Show completed missions" in body
     assert 'data-intel-open="debrief:es-alpha"' in body
     assert "COMPLETE es-alpha" in body
