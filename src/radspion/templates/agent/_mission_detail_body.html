@@ -3,8 +3,8 @@
    Data on the right, a hairline divider between.
 
    Deviations the README records: no "Mission:" title prefix (the breadcrumb
-   already says it); the slug and status badge join the breadcrumb row (the
-   badge is the only thing on the page naming the state); "Recovered Data",
+   already says it); the status badge joins the breadcrumb row (the badge
+   is the only thing on the page naming the state; the slug is not shown); "Recovered Data",
    the app's and the database's term, not Figma's "Recover Data". The
    completed state is invented — Figma only draws the active one: Debrief
    open with the Brief folded under it, and the archived data in the column
@@ -20,7 +20,6 @@
       Missions / {{ mission.title }}
     </a>
     <span class="mission-detail__meta text-mono">
-      {{ mission.slug }} ·
       <span class="status-badge status-badge--{{ mission.status }}">{{ mission.status }}</span>
     </span>
   </p>

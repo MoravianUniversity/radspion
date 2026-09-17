@@ -113,28 +113,29 @@
             <span class="mission-group__counts" data-group-counts>{{ group.counts_label() }}</span>
           </summary>
 
-          {# The Figma table's ID column carries the mission slug (210px, not
-             Figma's 97px — real slugs are long). Locked rows have no data
-             behind them and are not carried over; the Intel column links a
-             completed mission's recovered data and debrief in a modal. #}
+          {# Two columns: Title and Intel. The row marker on the leading rule
+             is the status — gold while a mission is active, green once it is
+             completed — so there is no ID (slug) or Status column; the state
+             is spelled out for screen readers only. An active row's Intel is
+             its Mission Brief (the overlay, with the submit form); a completed
+             row's is the brief, the debrief and the recovered data, read in
+             the intel modal. #}
           <div class="mission-table">
             <div class="mission-list__colhead" aria-hidden="true">
-              <span class="mission-list__col--id">ID</span>
               <span class="mission-list__col--title">Title</span>
               <span class="mission-list__col--intel">Intel</span>
-              <span class="mission-list__col--status">Status</span>
             </div>
             <ul class="mission-list">
             {% for mission in group.missions %}
               <li
-                class="mission-list__item{% if mission.status == 'completed' %} mission-list__item--completed{% endif %}"
+                class="mission-list__item mission-list__item--{{ mission.status }}"
                 data-mission-status="{{ mission.status }}"
+                data-mission-slug="{{ mission.slug }}"
               >
                 <div class="mission-card mission-card--{{ mission.status }}">
-                  <span class="mission-card__slug text-mono">{{ mission.slug }}</span>
-                  {# The title and arrow keep their href (the mission page is
-                     the no-JS route); mission-modal.js opens the brief in an
-                     overlay instead. #}
+                  {# The title keeps its href (the mission page is the no-JS
+                     route); mission-modal.js opens the file in an overlay
+                     instead. #}
                   <a
                     class="mission-card__link"
                     href="{{ url_for('agent.mission_detail', slug=mission.slug) }}"
@@ -143,50 +144,47 @@
                     data-mission-open-status="{{ mission.status }}"
                   >
                     <span class="mission-card__title">{{ mission.title }}</span>
+                    <span class="visually-hidden">({{ mission.status }})</span>
                   </a>
                   <span class="mission-card__intel intel">
+                    {# Mission Brief leads on every row so it lines up down
+                       the column; a completed row adds its debrief and data. #}
                     {% if mission.status == 'completed' and mission.slug in intel_missions %}
-                      <button
-                        class="intel__link"
-                        type="button"
-                        data-intel-open="data:{{ mission.slug }}"
-                        data-intel-label="Recovered Data — {{ mission.title }}"
-                      >Recovered Data
+                      {% for kind, label in (('brief', 'Mission Brief'), ('debrief', 'Mission Debrief'), ('data', 'Recovered Data')) %}
+                        <button
+                          class="intel__link"
+                          type="button"
+                          data-intel-open="{{ kind }}:{{ mission.slug }}"
+                          data-intel-label="{{ label }} — {{ mission.title }}"
+                        >{{ label }}
                         <svg class="intel__icon" viewBox="0 0 14 13" aria-hidden="true" focusable="false">
                           <path fill="currentColor" d="M2.5 0C1.67578 0 1 0.675781 1 1.5V4H2V1.5C2 1.21875 2.21875 1 2.5 1H12.5C12.7812 1 13 1.21875 13 1.5V11.5C13 11.7812 12.7812 12 12.5 12H2.5C2.21875 12 2 11.7812 2 11.5V9H1V11.5C1 12.3242 1.67578 13 2.5 13H12.5C13.3242 13 14 12.3242 14 11.5V1.5C14 0.675781 13.3242 0 12.5 0H2.5ZM6.72656 3.02344L6.02344 3.72656L8.29297 6H0V7H8.29297L6.02344 9.26953L6.72656 9.98047L10.207 6.5L6.72656 3.02344Z"/>
                         </svg>
-                      </button>
-                      <button
+                        </button>
+                      {% endfor %}
+                    {% elif mission.status != 'completed' %}
+                      <a
                         class="intel__link"
-                        type="button"
-                        data-intel-open="debrief:{{ mission.slug }}"
-                        data-intel-label="Mission Debrief — {{ mission.title }}"
-                      >Mission Debrief
+                        href="{{ url_for('agent.mission_detail', slug=mission.slug) }}"
+                        data-mission-open="{{ mission.slug }}"
+                        data-mission-open-title="{{ mission.title }}"
+                        data-mission-open-status="{{ mission.status }}"
+                      >Mission Brief
                         <svg class="intel__icon" viewBox="0 0 14 13" aria-hidden="true" focusable="false">
                           <path fill="currentColor" d="M2.5 0C1.67578 0 1 0.675781 1 1.5V4H2V1.5C2 1.21875 2.21875 1 2.5 1H12.5C12.7812 1 13 1.21875 13 1.5V11.5C13 11.7812 12.7812 12 12.5 12H2.5C2.21875 12 2 11.7812 2 11.5V9H1V11.5C1 12.3242 1.67578 13 2.5 13H12.5C13.3242 13 14 12.3242 14 11.5V1.5C14 0.675781 13.3242 0 12.5 0H2.5ZM6.72656 3.02344L6.02344 3.72656L8.29297 6H0V7H8.29297L6.02344 9.26953L6.72656 9.98047L10.207 6.5L6.72656 3.02344Z"/>
                         </svg>
-                      </button>
+                      </a>
                     {% endif %}
                   </span>
-                  <span class="status-badge status-badge--{{ mission.status }}">{{ mission.status }}</span>
-                  <a
-                    class="mission-card__arrow"
-                    href="{{ url_for('agent.mission_detail', slug=mission.slug) }}"
-                    aria-label="Open {{ mission.title }}"
-                    data-mission-open="{{ mission.slug }}"
-                    data-mission-open-title="{{ mission.title }}"
-                    data-mission-open-status="{{ mission.status }}"
-                  >
-                    <svg viewBox="0 0 14 13" aria-hidden="true" focusable="false">
-                      <path fill="currentColor" d="M2.5 0C1.67578 0 1 0.675781 1 1.5V4H2V1.5C2 1.21875 2.21875 1 2.5 1H12.5C12.7812 1 13 1.21875 13 1.5V11.5C13 11.7812 12.7812 12 12.5 12H2.5C2.21875 12 2 11.7812 2 11.5V9H1V11.5C1 12.3242 1.67578 13 2.5 13H12.5C13.3242 13 14 12.3242 14 11.5V1.5C14 0.675781 13.3242 0 12.5 0H2.5ZM6.72656 3.02344L6.02344 3.72656L8.29297 6H0V7H8.29297L6.02344 9.26953L6.72656 9.98047L10.207 6.5L6.72656 3.02344Z"/>
-                    </svg>
-                  </a>
                 </div>
                 {% if mission.status == 'completed' and mission.slug in intel_missions %}
                   <template data-intel-content="data:{{ mission.slug }}">
                     <div class="recovered-data__block">
                       <pre class="recovered-data__value text-mono">{{ intel_missions[mission.slug].recovered_data }}</pre>
                     </div>
+                  </template>
+                  <template data-intel-content="brief:{{ mission.slug }}">
+                    <article class="mission-markdown markdown-body">{{ intel_missions[mission.slug].brief_html }}</article>
                   </template>
                   <template data-intel-content="debrief:{{ mission.slug }}">
                     <article class="mission-markdown markdown-body">{{ intel_missions[mission.slug].debrief_html }}</article>

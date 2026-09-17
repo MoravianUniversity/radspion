@@ -94,8 +94,12 @@ def test_dashboard_hides_welcome_memo_after_first_completion(testing_storyline_c
     assert "data-inbox" not in body
     assert "mail__title" not in body
     assert "Show completed missions" in body
+    # A completed row links its brief, debrief and recovered data.
+    assert 'data-intel-open="brief:es-alpha"' in body
     assert 'data-intel-open="debrief:es-alpha"' in body
+    assert 'data-intel-open="data:es-alpha"' in body
     assert "COMPLETE es-alpha" in body
+    assert "mission-card__slug" not in body
 
 
 def test_dashboard_footer_and_rail_site_links(testing_storyline_client):

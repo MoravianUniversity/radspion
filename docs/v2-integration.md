@@ -144,7 +144,8 @@ make acceptance # Playwright browser tests
 All the behaviour-bearing selectors the JS and tests rely on are preserved:
 `clearance-form`, `name="clearance_code"`, `data-transmission-modal`,
 `data-mission-group`, `data-show-completed`, `data-group-counts`,
-`mission-list__item`, `mission-card__slug`, `status-badge`,
+`mission-list__item` (with `data-mission-slug`, which replaced the visible
+`mission-card__slug`), `status-badge` (mission page / overlay only),
 `recovered-data-form`, `recovered-data__value`, `mission-detail__title`,
 `mission-detail__meta`, `mission-panel__collapse`, `site-header--public`,
 `site-header__agent-link[--current]`, `page page--activity`,

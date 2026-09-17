@@ -24,11 +24,11 @@ def dismiss_welcome_overlay(page: Page) -> None:
 
 
 def mission_list_item(page: Page, slug: str):
-    return page.locator(f'li.mission-list__item:has(.mission-card__slug:text-is("{slug}"))')
+    return page.locator(f'li.mission-list__item[data-mission-slug="{slug}"]')
 
 
 def mission_group_for_slug(page: Page, slug: str):
-    return page.locator(f'details[data-mission-group]:has(.mission-card__slug:text-is("{slug}"))')
+    return page.locator(f'details[data-mission-group]:has(li[data-mission-slug="{slug}"])')
 
 
 def expand_mission_group(page: Page, slug: str) -> None:

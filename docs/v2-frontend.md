@@ -47,7 +47,6 @@ section nav), `agent/_mobile_nav.html` (fixed bottom tab bar < 760px),
 New, all in `static/js/`:
 
 - `intel-modal.js` — Recovered Data / Mission Debrief pop-outs (dashboard + Mission Data)
-- `agent-id.js` — top-bar hex identifier, generated client-side from the codename
 - `topbar-clock.js` — live local-time clock in the top bar
 
 `mission-detail-copy-data.js` gained `window.RadspionCopyData.wireWithin(root)`

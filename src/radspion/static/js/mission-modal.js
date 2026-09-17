@@ -1,7 +1,7 @@
 /**
  * Mission overlay — opens a mission's brief over the dashboard.
  *
- * A mission row's title / arrow link keeps its href (the mission page is still
+ * A mission row's title / Mission Brief link keeps its href (the mission page is still
  * the no-JS route and the deep link); clicking it here fetches that page,
  * lifts its .brief-columns into the dialog (_mission_modal.html) and wires the
  * copy buttons and, for an active mission, the Recovered Data form. Any other
@@ -87,11 +87,10 @@
       });
   }
 
-  function setHeading(title, slug, status) {
+  function setHeading(title, status) {
     titleEl.textContent = title || "";
     kickerEl.textContent = status === "completed" ? "Mission File" : "Mission Brief";
-    metaEl.innerHTML = "";
-    metaEl.appendChild(document.createTextNode(status ? slug + " · " : slug));
+    metaEl.innerHTML = ""; // the status badge only — slugs are not shown
     if (status) {
       var badge = document.createElement("span");
       badge.className = "status-badge status-badge--" + status;
@@ -108,8 +107,8 @@
     window.location.reload();
   }
 
-  function render(slug, mission) {
-    setHeading(mission.title, slug, mission.status);
+  function render(mission) {
+    setHeading(mission.title, mission.status);
     bodyEl.innerHTML = "";
     bodyEl.appendChild(document.importNode(mission.columns, true));
     bodyEl.scrollTop = 0;
@@ -130,16 +129,16 @@
     }
   }
 
-  function showLoading(slug, title, status) {
-    setHeading(title, slug, status);
+  function showLoading(title, status) {
+    setHeading(title, status);
     bodyEl.innerHTML =
       '<p class="mission-modal__loading text-mono">Retrieving mission file…</p>';
   }
 
   // A brief may link to a mission the agent has no clearance for yet: the
   // page 404s, so say so here rather than bouncing to the sealed-channel page.
-  function showLocked(slug) {
-    setHeading("File Sealed", slug, "");
+  function showLocked() {
+    setHeading("File Sealed", "");
     kickerEl.textContent = "Mission File";
     bodyEl.innerHTML =
       '<div class="mission-modal__locked">' +
@@ -155,7 +154,7 @@
     var id = (requestId += 1);
 
     lastFocus = trigger || null;
-    showLoading(slug, title, status);
+    showLoading(title, status);
     modal.hidden = false;
     document.body.classList.add("has-mission-modal");
     closeBtn.focus();
@@ -165,14 +164,14 @@
         if (id !== requestId) {
           return; // closed, or another mission opened meanwhile
         }
-        render(slug, mission);
+        render(mission);
       })
       .catch(function (error) {
         if (id !== requestId) {
           return;
         }
         if (error && error.status === 404) {
-          showLocked(slug);
+          showLocked();
           return;
         }
         // Anything else: fall back to the page itself rather than a broken dialog.

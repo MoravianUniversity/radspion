@@ -2,9 +2,9 @@
 
    The Date | Time readout is a real, live clock in the viewer's local
    timezone (static/js/topbar-clock.js); Network / Uplink keep Figma's static
-   labels with a comms pulse on the dots. The agent block shows a
-   client-generated hex identifier under the codename (Figma's "071b9a91-41dc"
-   slot), and the codename links to the Personnel File. #}
+   labels with a comms pulse on the dots. The agent block is the codename
+   alone (Figma's hex identifier under it is dropped), linking to the
+   Personnel File. #}
 <header class="topbar">
   <a class="topbar__logo" href="{{ url_for('agent.dashboard') }}">
     <img src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="62" height="62" alt="Radspion dashboard">
@@ -23,8 +23,6 @@
         {% if on_personnel %}aria-current="page"{% endif %}
       >{{ user.codename }}</a>
     </p>
-    {# Decorative hex identifier, filled in by static/js/agent-id.js. #}
-    <p class="topbar__label" data-agent-id data-agent-seed="{{ user.codename }}"></p>
   </div>
 
   <span class="topbar__sep topbar__sep--2"></span>
