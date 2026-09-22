@@ -1,0 +1,28 @@
+name: Redeploy Preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to deploy to dev.radspion.com"
+        required: true
+        type: string
+
+jobs:
+  redeploy-preview:
+    name: Redeploy preview to server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Redeploy preview via SSH (jump box)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEVDEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          proxy_host: ${{ secrets.DEPLOY_JUMP_HOST }}
+          proxy_username: ${{ secrets.DEPLOY_JUMP_USER }}
+          proxy_key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/radspiondev/radspion
+            ./redeploy-preview.sh ${{ inputs.pr_number }}

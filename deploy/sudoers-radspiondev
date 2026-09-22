@@ -1,0 +1,7 @@
+# Install on webapps: sudo cp deploy/sudoers-radspiondev /etc/sudoers.d/radspiondev
+#                  sudo chmod 440 /etc/sudoers.d/radspiondev
+#                  sudo visudo -cf /etc/sudoers.d/radspiondev
+#
+# Lets the radspiondev user run redeploy-preview.sh (systemctl stop/start) without a password.
+
+radspiondev ALL=(root) NOPASSWD: /bin/systemctl start radspiondev, /bin/systemctl stop radspiondev, /bin/systemctl restart radspiondev, /bin/systemctl status radspiondev
