@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+{% extends "base_content_v2.html" %}
 
 {% block title %}What is Radspion?{% endblock %}
 {% block meta_description %}Radspion — field exercises for Moravian computer science courses, framed as agency missions.{% endblock %}
-{% block main_class %}page__main--content{% endblock %}
+{% block body_class %}page page--content{% endblock %}
 
 {% block content %}
   <article class="content-page">
@@ -13,7 +13,11 @@
       for authorized <strong>@moravian.edu</strong> students.
     </p>
     <p>
-      <a href="{{ url_for('main.index') }}">Return to sign-in</a>
+      {% if user %}
+        <a href="{{ url_for('agent.dashboard') }}">Return to Mission Dashboard</a>
+      {% else %}
+        <a href="{{ url_for('main.index') }}">Return to sign-in</a>
+      {% endif %}
     </p>
   </article>
 {% endblock %}

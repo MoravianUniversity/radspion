@@ -30,6 +30,10 @@ def test_active_mission_shows_brief_and_enabled_recovered_data_form(testing_stor
     assert 'id="recovered-data-input"' in body
     assert "disabled" not in body.split('id="recovered-data-input"')[1].split("</form>")[0]
     assert "recovered-data__value" not in body
+    # Radspion lockup atop the brief: mark + wordmark, never the tagline.
+    assert "brief-lockup" in body
+    assert "radspion-wordmark.svg" in body
+    assert "radspion-tagline.svg" not in body
 
 
 def test_completed_mission_shows_recovered_data_debrief_and_brief(testing_storyline_client):
@@ -61,6 +65,8 @@ def test_completed_mission_shows_recovered_data_debrief_and_brief(testing_storyl
     assert "Congratulations, you completed ES: Alpha" in body
     assert "Mission Brief" in body
     assert "recovered-data-form" not in body
+    assert body.count("brief-lockup__wordmark") == 1
+    assert "radspion-tagline.svg" not in body
 
 
 def test_mission_detail_404_when_not_listed(testing_storyline_client):

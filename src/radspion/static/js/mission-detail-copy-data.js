@@ -48,8 +48,8 @@
     });
   }
 
-  function init() {
-    document.querySelectorAll("article.mission-markdown").forEach(function (article) {
+  function wireWithin(root) {
+    root.querySelectorAll("article.mission-markdown").forEach(function (article) {
       article.querySelectorAll(".highlight").forEach(wrapBlock);
       article.querySelectorAll("pre").forEach(function (pre) {
         if (!pre.closest(".highlight")) {
@@ -58,10 +58,17 @@
       });
     });
 
-    document.querySelectorAll(".recovered-data__block pre.recovered-data__value").forEach(function (pre) {
+    root.querySelectorAll(".recovered-data__block pre.recovered-data__value").forEach(function (pre) {
       wrapBlock(pre, "Copy recovered data to clipboard");
     });
   }
+
+  function init() {
+    wireWithin(document);
+  }
+
+  /* Content injected after load (the dashboard's intel modal) wires itself. */
+  window.RadspionCopyData = { wireWithin: wireWithin };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

@@ -1,0 +1,14 @@
+{# Content pages (About, Privacy): the signed-in shell — header bar, rail,
+   footer — when the route resolved a session user, the public shell otherwise.
+   Pages fill `content`; this bridges it into the agent shell's block. #}
+{% if user %}
+  {% extends "agent/base_agent_v2.html" %}
+{% else %}
+  {% extends "base_public_v2.html" %}
+{% endif %}
+
+{% block agent_content %}
+  <div class="content-column">
+    {{ self.content() }}
+  </div>
+{% endblock %}

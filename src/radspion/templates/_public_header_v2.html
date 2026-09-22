@@ -1,0 +1,9 @@
+{# Public (signed-out) header, v2 theme. Brand lockup + Sign in. Carries the
+   site-header--public hook the acceptance/unit tests key off. #}
+<header class="pubhead site-header--public">
+  <a class="pubhead__brand" href="{{ url_for('main.index') }}">
+    <img class="pubhead__mark" src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="40" height="40" alt="">
+    <span class="pubhead__title">Radspion</span>
+  </a>
+  <a class="pubhead__signin" href="{{ url_for('auth.google_login') }}">Sign in</a>
+</header>

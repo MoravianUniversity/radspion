@@ -72,6 +72,13 @@ def test_dashboard_shows_welcome_memo_when_no_missions_completed(testing_storyli
     assert "dashboard__welcome" in body
     assert 'aria-label="Welcome memo from Radspion Command"' in body
     assert welcome_html in body
+    # The memo is the inbox's one message, read through the intel modal.
+    assert 'data-intel-open="message:welcome"' in body
+    assert 'data-intel-content="message:welcome"' in body
+    assert "Director of Agent Development" in body
+    assert "data-intel-modal" in body
+    assert "inbox.js" in body
+    assert "data-inbox" in body
     assert "Show completed missions" not in body
 
 
@@ -82,17 +89,32 @@ def test_dashboard_hides_welcome_memo_after_first_completion(testing_storyline_c
     body = testing_storyline_client.get("/agent/dashboard").data.decode()
 
     assert "dashboard__welcome" not in body
+    assert "message:welcome" not in body
+    # An empty inbox is not shown at all.
+    assert "data-inbox" not in body
+    assert "mail__title" not in body
     assert "Show completed missions" in body
+    # A completed row links its brief, debrief and recovered data.
+    assert 'data-intel-open="brief:es-alpha"' in body
+    assert 'data-intel-open="debrief:es-alpha"' in body
+    assert 'data-intel-open="data:es-alpha"' in body
+    assert "COMPLETE es-alpha" in body
+    assert "mission-card__slug" not in body
 
 
-def test_dashboard_footer_links_field_activity(testing_storyline_client):
+def test_dashboard_footer_and_rail_site_links(testing_storyline_client):
+    """Field Activity is unsurfaced for now; About / Privacy moved into the rail."""
     with testing_storyline_client.session_transaction() as sess:
         sess[SESSION_USER_ID] = SAMPLE_AGENTS["alice"]["id"]
 
     body = testing_storyline_client.get("/agent/dashboard").data.decode()
 
-    assert 'href="/activity"' in body
-    assert "Field Activity" in body
+    assert 'href="/activity"' not in body
+    assert "Field Activity" not in body
+    assert 'data-tooltip="What is Radspion?"' in body
+    assert 'data-tooltip="Privacy Policy"' in body
+    assert 'data-tooltip="Mission Dashboard"' in body
+    assert "Educational Use Only" in body
     assert "<!-- ORUTNRSOAN -->" in body
 
 
@@ -111,3 +133,25 @@ def test_clearance_then_dashboard_lists_storyline_missions(testing_storyline_cli
     assert "es-alpha" in body
     assert "es-beta" in body
     assert "Testing Storyline" in body
+
+
+def test_dashboard_opens_missions_in_overlay(testing_storyline_client):
+    """Mission rows open the brief in an overlay; the static welcome copy is gone."""
+    with testing_storyline_client.session_transaction() as sess:
+        sess[SESSION_USER_ID] = SAMPLE_AGENTS["alice"]["id"]
+
+    body = testing_storyline_client.get("/agent/dashboard").data.decode()
+
+    assert "data-mission-modal" in body
+    assert "mission-modal.js" in body
+    assert "mission-detail-submit.js" in body
+    assert 'data-mission-open="es-beta"' in body
+    assert 'data-mission-open-status="active"' in body
+    # dashboard.js counts [data-mission-status] rows; the overlay triggers must
+    # not add to that count (one <li> per mission carries it).
+    rows = body.count('class="mission-list__item')
+    assert body.count("data-mission-status=") == rows
+    assert 'href="/agent/missions/es-beta"' in body
+    assert "You are cleared to review" not in body
+    assert "welcome--full" not in body
+    assert 'data-collapse-after="8"' in body

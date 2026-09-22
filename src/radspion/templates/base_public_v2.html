@@ -1,0 +1,46 @@
+{# Public v2 shell — signed-out content pages (About, Privacy, 404, clearance).
+   A centred column under the public header, with the sticky v2 footer. Pages
+   fully control the body class via the `body_class` block (some tests pin it). #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{% block meta_description %}Radspion — Moravian University field operations platform for authorized agents.{% endblock %}">
+  <title>{% block title %}Radspion{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/ibk6axw.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/radspion-v2.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}page page--public{% endblock %}">
+  <div class="page-v2 pubshell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages" role="status">
+          {% for category, message in messages %}
+            <p class="flash-message flash-message--{{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block site_header %}{% include "_public_header_v2.html" %}{% endblock %}
+
+    <main class="pubshell__main {% block main_class %}{% endblock %}">
+      {% block content %}{% endblock %}
+    </main>
+
+    {% block site_footer %}
+      <div class="footer-band">
+        {% with footer_variant = 'sub' %}
+          {% include "_site_footer_v2.html" %}
+        {% endwith %}
+      </div>
+    {% endblock %}
+  </div>
+  {% block extra_body %}{% endblock %}
+</body>
+</html>

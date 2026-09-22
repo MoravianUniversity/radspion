@@ -1,135 +1,169 @@
-{% extends "base.html" %}
+{# Field Activity — v2 theme, public page. Standalone because the test pins the
+   body class to `page page--activity`. Public header when signed out (carries
+   the site-header--public hook); a compact agent bar when signed in, plus the
+   back-to-dashboard nav. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Field Activity — mission progress across Radspion storylines.">
+  <title>Field Activity — Radspion</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 
-{% block title %}Field Activity — Radspion{% endblock %}
-{% block meta_description %}Field Activity — mission progress across Radspion storylines.{% endblock %}
-{% block body_class %}page--activity{% endblock %}
-{% block main_class %}page__main--activity{% endblock %}
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/ibk6axw.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/radspion-v2.css') }}">
+</head>
+<body class="page page--activity">
+  <div class="page-v2 pubshell">
 
-{% block site_header %}
-  {% if user %}
-    {% include "agent/_header.html" %}
-  {% else %}
-    {% include "_public_header.html" %}
-  {% endif %}
-{% endblock %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages" role="status">
+          {% for category, message in messages %}
+            <p class="flash-message flash-message--{{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-{% block content %}
-  <div class="activity">
     {% if user %}
-      {% include "agent/_mission_back_nav.html" %}
+      <header class="pubhead">
+        <a class="pubhead__brand" href="{{ url_for('agent.dashboard') }}">
+          <img class="pubhead__mark" src="{{ url_for('static', filename='img/radspion-mark.svg') }}" width="40" height="40" alt="">
+          <span class="pubhead__title">Radspion</span>
+        </a>
+        <div class="pubhead__agent">
+          <a class="pubhead__agent-name" href="{{ url_for('agent.personnel') }}">{{ user.codename }}</a>
+          <form action="{{ url_for('auth.logout') }}" method="post">
+            <button class="pubhead__signout" type="submit">Sign out</button>
+          </form>
+        </div>
+      </header>
+    {% else %}
+      {% include "_public_header_v2.html" %}
     {% endif %}
 
-    <header class="activity__intro">
-      <h1 class="activity__heading">Field Activity</h1>
-      <p class="activity__lede text-muted">
-        Agency-wide mission progress. Codenames only — mission titles are classified.
-      </p>
-    </header>
+    <main class="pubshell__main activity">
+      {% if user %}
+        <nav class="crumb-nav" aria-label="Mission dashboard">
+          <a class="crumb-nav__link" href="{{ url_for('agent.dashboard') }}">← Mission Dashboard</a>
+        </nav>
+      {% endif %}
 
-    <div class="activity__columns">
-      <div class="activity__column">
-        <section class="activity-section" aria-labelledby="activity-leaderboard-heading">
-          <h2 class="activity-section__heading" id="activity-leaderboard-heading">Top Agents</h2>
-          {% if activity.top_agents %}
-            <ol class="activity-leaderboard">
-              {% for entry in activity.top_agents %}
-                <li class="activity-leaderboard__item">
-                  <span class="activity-leaderboard__rank text-mono" aria-hidden="true">{{ entry.rank }}</span>
-                  <span class="activity-leaderboard__agent">{{ entry.codename }}</span>
-                  <span class="activity-leaderboard__score">
-                    {{ entry.completed_count }} mission{{ 's' if entry.completed_count != 1 else '' }} completed
-                  </span>
-                </li>
-              {% endfor %}
-            </ol>
-          {% else %}
-            <div class="activity-panel">
-              <p class="activity-panel__empty text-muted">No agents have completed missions yet.</p>
-            </div>
-          {% endif %}
-        </section>
+      <header class="activity__intro">
+        <h1 class="activity__heading">Field Activity</h1>
+        <p class="activity__lede">
+          Agency-wide mission progress. Codenames only — mission titles are classified.
+        </p>
+      </header>
 
-        <section class="activity-section" aria-labelledby="activity-storylines-heading">
-          <h2 class="activity-section__heading" id="activity-storylines-heading">Storylines</h2>
-          {% if activity.storylines %}
-            <ul class="activity-storyline-list">
-              {% for entry in activity.storylines %}
-                <li class="activity-storyline">
-                  <span class="activity-storyline__name">{{ entry.name }}</span>
-                  <span class="activity-storyline__meta text-muted">{{ entry | storyline_meta }}</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="activity-panel">
-              <p class="activity-panel__empty text-muted">No storylines configured yet.</p>
-            </div>
-          {% endif %}
-        </section>
-      </div>
-
-      <div class="activity__column">
-        <section class="activity-section" aria-labelledby="activity-clearances-heading">
-          <h2 class="activity-section__heading" id="activity-clearances-heading">Recent Clearances Granted</h2>
-          {% if activity.recent_clearances %}
-            <div class="activity-feed-panel">
-              <ul class="activity-feed">
-                {% for entry in activity.recent_clearances %}
-                  {% set feed_time = entry.occurred_at | activity_relative_time %}
-                  <li class="activity-feed__item">
-                    <span class="activity-feed__text">
-                      <span class="activity-feed__agent">{{ entry.codename }}</span>
-                      in
-                      <span class="activity-feed__storyline">{{ entry.storyline_name }}</span>
+      <div class="activity__columns">
+        <div class="activity__column">
+          <section class="activity-section" aria-labelledby="activity-leaderboard-heading">
+            <h2 class="activity-section__heading" id="activity-leaderboard-heading">Top Agents</h2>
+            {% if activity.top_agents %}
+              <ol class="panel activity-leaderboard">
+                {% for entry in activity.top_agents %}
+                  <li class="activity-leaderboard__item">
+                    <span class="activity-leaderboard__rank text-mono" aria-hidden="true">{{ entry.rank }}</span>
+                    <span class="activity-leaderboard__agent">{{ entry.codename }}</span>
+                    <span class="activity-leaderboard__score">
+                      {{ entry.completed_count }} mission{{ 's' if entry.completed_count != 1 else '' }} completed
                     </span>
-                    <time class="activity-feed__time text-mono" datetime="{{ feed_time.iso }}">{{ feed_time.label }}</time>
+                  </li>
+                {% endfor %}
+              </ol>
+            {% else %}
+              <div class="panel activity-panel">
+                <p class="activity-panel__empty">No agents have completed missions yet.</p>
+              </div>
+            {% endif %}
+          </section>
+
+          <section class="activity-section activity-section--spaced" aria-labelledby="activity-storylines-heading">
+            <h2 class="activity-section__heading" id="activity-storylines-heading">Storylines</h2>
+            {% if activity.storylines %}
+              <ul class="panel activity-storyline-list">
+                {% for entry in activity.storylines %}
+                  <li class="activity-storyline">
+                    <span class="activity-storyline__name">{{ entry.name }}</span>
+                    <span class="activity-storyline__meta">{{ entry | storyline_meta }}</span>
                   </li>
                 {% endfor %}
               </ul>
-            </div>
-          {% else %}
-            <div class="activity-feed-panel">
-              <p class="activity-panel__empty text-muted">No clearance grants recorded yet.</p>
-            </div>
-          {% endif %}
-        </section>
+            {% else %}
+              <div class="panel activity-panel">
+                <p class="activity-panel__empty">No storylines configured yet.</p>
+              </div>
+            {% endif %}
+          </section>
+        </div>
 
-        <section class="activity-section activity-section--spaced" aria-labelledby="activity-completions-heading">
-          <h2 class="activity-section__heading" id="activity-completions-heading">Recent Missions Completed</h2>
-          {% if activity.recent_completions %}
-            <div class="activity-feed-panel">
-              <ul class="activity-feed">
-                {% for entry in activity.recent_completions %}
-                  {% set feed_time = entry.occurred_at | activity_relative_time %}
-                  <li class="activity-feed__item">
-                    <span class="activity-feed__text">
-                      <span class="activity-feed__agent">{{ entry.codename }}</span>
-                      in
-                      <span class="activity-feed__storyline">{{ entry.storyline_name }}</span>
-                    </span>
-                    <time class="activity-feed__time text-mono" datetime="{{ feed_time.iso }}">{{ feed_time.label }}</time>
-                  </li>
-                {% endfor %}
-              </ul>
+        <div class="activity__column">
+          <section class="activity-section" aria-labelledby="activity-clearances-heading">
+            <h2 class="activity-section__heading" id="activity-clearances-heading">Recent Clearances Granted</h2>
+            <div class="panel activity-feed-panel">
+              {% if activity.recent_clearances %}
+                <ul class="activity-feed">
+                  {% for entry in activity.recent_clearances %}
+                    {% set feed_time = entry.occurred_at | activity_relative_time %}
+                    <li class="activity-feed__item">
+                      <span class="activity-feed__text">
+                        <span class="activity-feed__agent">{{ entry.codename }}</span>
+                        in
+                        <span class="activity-feed__storyline">{{ entry.storyline_name }}</span>
+                      </span>
+                      <time class="activity-feed__time text-mono" datetime="{{ feed_time.iso }}">{{ feed_time.label }}</time>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="activity-panel__empty">No clearance grants recorded yet.</p>
+              {% endif %}
             </div>
-          {% else %}
-            <div class="activity-feed-panel">
-              <p class="activity-panel__empty text-muted">No missions completed yet.</p>
+          </section>
+
+          <section class="activity-section activity-section--spaced" aria-labelledby="activity-completions-heading">
+            <h2 class="activity-section__heading" id="activity-completions-heading">Recent Missions Completed</h2>
+            <div class="panel activity-feed-panel">
+              {% if activity.recent_completions %}
+                <ul class="activity-feed">
+                  {% for entry in activity.recent_completions %}
+                    {% set feed_time = entry.occurred_at | activity_relative_time %}
+                    <li class="activity-feed__item">
+                      <span class="activity-feed__text">
+                        <span class="activity-feed__agent">{{ entry.codename }}</span>
+                        in
+                        <span class="activity-feed__storyline">{{ entry.storyline_name }}</span>
+                      </span>
+                      <time class="activity-feed__time text-mono" datetime="{{ feed_time.iso }}">{{ feed_time.label }}</time>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="activity-panel__empty">No missions completed yet.</p>
+              {% endif %}
             </div>
-          {% endif %}
-        </section>
+          </section>
+        </div>
       </div>
-    </div>
 
-    {% if user %}
-      {% with bottom=true %}
-        {% include "agent/_mission_back_nav.html" %}
+      {% if user %}
+        <nav class="crumb-nav crumb-nav--bottom" aria-label="Mission dashboard">
+          <a class="crumb-nav__link" href="{{ url_for('agent.dashboard') }}">← Mission Dashboard</a>
+        </nav>
+      {% endif %}
+    </main>
+
+    <div class="footer-band">
+      {% with footer_variant = 'sub' %}
+        {% include "_site_footer_v2.html" %}
       {% endwith %}
-    {% endif %}
+    </div>
   </div>
-{% endblock %}
 
-{% block extra_body %}
   {% if user %}
     {% include "_transmission_modal.html" %}
     <script src="{{ url_for('static', filename='js/transmission-modal.js') }}"></script>
@@ -137,4 +171,5 @@
     <script src="{{ url_for('static', filename='js/clearance-redeem.js') }}"></script>
     <script src="{{ url_for('static', filename='js/clearance-form.js') }}"></script>
   {% endif %}
-{% endblock %}
+</body>
+</html>

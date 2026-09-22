@@ -1,0 +1,22 @@
+{# Intel modal — shared dialog shell for the dashboard's Recovered Data /
+   Mission Debrief links. Content comes from the per-mission <template>
+   blocks in the mission rows; static/js/intel-modal.js drives it. #}
+<div class="intel-modal" data-intel-modal hidden>
+  <div class="intel-modal__backdrop" data-intel-close></div>
+  <section
+    class="intel-modal__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="intel-modal-title"
+  >
+    <header class="intel-modal__head">
+      <h2 class="intel-modal__title" id="intel-modal-title" data-intel-title></h2>
+      <button class="intel-modal__close" type="button" data-intel-close aria-label="Close">
+        <svg viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M1.05 0L0 1.05 5.95 7 0 12.95 1.05 14 7 8.05 12.95 14 14 12.95 8.05 7 14 1.05 12.95 0 7 5.95 1.05 0Z"/>
+        </svg>
+      </button>
+    </header>
+    <div class="intel-modal__body markdown-v2" data-intel-body></div>
+  </section>
+</div>
